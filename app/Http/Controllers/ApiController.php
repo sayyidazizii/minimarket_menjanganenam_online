@@ -1480,7 +1480,7 @@ class ApiController extends Controller
                     JournalVoucherItem::create($journal_credit);
 
                     //beban pokok penjualan Non BKP Tunai
-                    $account_setting_name = 'sales_cash_receivable_bkp_account';
+                    $account_setting_name = 'sales_cash_receivable_non_bkp_account';
                     $account_id = $this->getAccountId($account_setting_name);
                     $account_setting_status = $this->getAccountSettingStatus($account_setting_name);
                     $account_default_status = $this->getAccountDefaultStatus($account_id);
@@ -1616,7 +1616,7 @@ class ApiController extends Controller
                     JournalVoucherItem::create($journal_credit_ppn);
 
                     //beban pokok penjualan Non BKP Kredit
-                    $account_setting_name = 'sales_cash_receivable_bkp_account';
+                    $account_setting_name = 'sales_cash_receivable_non_bkp_account';
                     $account_id = $this->getAccountId($account_setting_name);
                     $account_setting_status = $this->getAccountSettingStatus($account_setting_name);
                     $account_default_status = $this->getAccountDefaultStatus($account_id);

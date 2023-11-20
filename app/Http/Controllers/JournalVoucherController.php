@@ -237,7 +237,7 @@ class JournalVoucherController extends Controller
         $data = User::where('user_id', $user_id)
         ->first();
 
-        return $data['full_name'];
+        return $data['full_name']?? '';
     }
 
     public function printJournalVoucher($journal_voucher_id)
