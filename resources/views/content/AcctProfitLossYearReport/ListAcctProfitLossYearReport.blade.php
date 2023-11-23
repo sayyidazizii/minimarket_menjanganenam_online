@@ -395,7 +395,7 @@
                     </tr>
                     <tr>
                         <th style="width: 80%">RUGI / LABA</th>
-                        <th style="width: 20%; text-align: right">{{ number_format($grand_total_account_amount1 - $grand_total_account_amount2,2,'.',',') }}</th>
+                        {{-- <th style="width: 20%; text-align: right">{{ number_format($grand_total_account_amount1 - $grand_total_account_amount2,2,'.',',') }}</th> --}}
                     </tr>
                 </tbody>
             </table>
