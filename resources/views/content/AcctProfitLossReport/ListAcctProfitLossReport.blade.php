@@ -3,9 +3,31 @@
 @extends('adminlte::page')
 
 
-@section('title', 'PBF | Koperasi Menjangan Enam')
+@section('title', 'MOZAIC Minimarket')
 <link rel="shortcut icon" href="{{ asset('resources/assets/logo_pbf.ico') }}" />
 
+@section('js')
+    <script>
+           function reset_add(){
+		$.ajax({
+				type: "GET",
+				url : "{{route('reset-filter-profit-loss-report')}}",
+				success: function(msg){
+                    location.reload();
+			}
+
+		});
+	}
+
+        $(document).ready(function(){
+
+            var journal_voucher_id = {!! json_encode(session('journal_voucher_id')) !!} 
+            if (journal_voucher_id == null) {
+                $('#journal_voucher_id').select2('val', ' ');
+            }
+        });
+    </script>
+@endsection
 @section('content_header')
 
     <nav aria-label="breadcrumb">
@@ -18,214 +40,253 @@
 @stop
 
 @section('content')
-    <h3 class="page-title">
-        <b>Laporan Perhitungan Rugi / Laba Tahunan</b>
-    </h3>
-    <br />
-    <div id="accordion">
-        <form action="{{ route('filter-profit-loss-report') }}" method="post">
-            @csrf
-            <div class="card border border-dark">
-                <div class="card-header bg-dark" id="headingOne" data-toggle="collapse" data-target="#collapseOne"
-                    aria-expanded="true" aria-controls="collapseOne">
-                    <h5 class="mb-0">
-                        Filter
-                    </h5>
-                </div>
-                <div id="collapseOne" class="collapse show" aria-labelledby="headingOne" data-parent="#accordion">
-                    <div class="card-body">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="form-group form-md-line-input" style="width: 50%">
-                                    <section class="control-label">Bulan
-                                        <span class="required text-danger">
-                                            *
-                                        </span>
-                                    </section>
-                                    {!! Form::select(0, $monthlist, $month, [
-                                        'class' => 'selection-search-clear select-form',
-                                        'name' => 'month',
-                                        'id' => 'month',
-                                    ]) !!}
-                                </div>
+<h3 class="page-title">
+    <b>Laporan Perhitungan Rugi / Laba</b>
+</h3>
+<br/>
+<div id="accordion">
+    <form action="{{ route('filter-profit-loss-report') }}" method="post">
+        @csrf
+        <div class="card border border-dark">
+            <div class="card-header bg-dark" id="headingOne" data-toggle="collapse" data-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                <h5 class="mb-0">
+                    Filter
+                </h5>
+            </div>
+            <div id="collapseOne" class="collapse show" aria-labelledby="headingOne" data-parent="#accordion">
+                <div class="card-body">
+                    <div class="row">
+                        <div class = "col-md-6">
+                            <div class="form-group form-md-line-input">
+                                <section class="control-label">Tanggal Awal
+                                    <span class="required text-danger">
+                                        *
+                                    </span>
+                                </section>
+                                <input style="width: 50%" class="form-control input-bb" name="start_date" id="start_date" type="date" data-date-format="dd-mm-yyyy" autocomplete="off" value="{{ $start_date }}"/>
                             </div>
+                        </div>
 
-                            <div class="col-md-6">
-                                <div class="form-group form-md-line-input" style="width: 50%">
-                                    <section class="control-label">Tahun
-                                        <span class="required text-danger">
-                                            *
-                                        </span>
-                                    </section>
-                                    {!! Form::select(0, $yearlist, $year, [
-                                        'class' => 'selection-search-clear select-form',
-                                        'name' => 'year',
-                                        'id' => 'year',
-                                    ]) !!}
-                                </div>
+                        <div class = "col-md-6">
+                            <div class="form-group form-md-line-input">
+                                <section class="control-label">Tanggal Akhir
+                                    <span class="required text-danger">
+                                        *
+                                    </span>
+                                </section>
+                                <input style="width: 50%" class="form-control input-bb" name="end_date" id="end_date" type="date" data-date-format="dd-mm-yyyy" autocomplete="off" value="{{ $end_date }}"/>
                             </div>
                         </div>
                     </div>
-                    <div class="card-footer text-muted">
-                        <div class="form-actions float-right">
-                            <a href="{{ route('reset-filter-profit-loss-report') }}" type="reset" name="Reset"
-                                class="btn btn-danger"><i class="fa fa-times"></i> Batal</a>
-                            <button type="submit" name="Find" class="btn btn-primary" title="Search Data"><i
-                                    class="fa fa-search"></i> Cari</button>
-                        </div>
+                </div>
+                <div class="card-footer text-muted">
+                    <div class="form-actions float-right">
+                        <a href="{{ route('reset-filter-profit-loss-report') }}" type="reset" name="Reset" class="btn btn-danger"><i class="fa fa-times"></i> Batal</a>
+                        <button type="submit" name="Find" class="btn btn-primary" title="Search Data"><i class="fa fa-search"></i> Cari</button>
                     </div>
                 </div>
             </div>
-
-        </form>
-    </div>
-    <br />
-    @if (session('msg'))
-        <div class="alert alert-info" role="alert">
-            {{ session('msg') }}
-        </div>
-    @endif
-    <div class="card border border-dark">
-        <div class="card-header bg-dark clearfix">
-            <h5 class="mb-0 float-left">
-                Daftar
-            </h5>
         </div>
 
-        <div class="card-body">
-            <div class="table-responsive pt-5">
-                <table id="" style="width:100%" class="table table-bordered table-full-width">
-                    <div class="text-muted">
-                        <div class="form-actions float-right mb-2">
-                            <a class="btn btn-secondary" href="{{ url('profit-loss-report/print') }}" target="_blank"><i
-                                    class="fa fa-file-pdf"></i> Pdf</a>
-                            <a class="btn btn-dark" href="{{ url('profit-loss-report/export') }}"><i
-                                    class="fa fa-download"></i> Export Data</a>
-                        </div>
-                    </div>
-                    <thead>
-                        <tr>
-                            <td colspan='3' style='text-align:center;'>
-                                <div style='font-weight:bold'>Laporan Perhitungan Rugi / Laba
-                                </div>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td colspan='3' style='text-align:center;'>
-                                <div>
-                                    Januari - {{ $APLR->getMonthName($month) }} {{ $year }}
-                                </div>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td colspan='3'></td>
-                        </tr>
-                    </thead>
-                    <tbody>
+    </form>
+</div>
+<br/>
+@if(session('msg'))
+<div class="alert alert-info" role="alert">
+    {{session('msg')}}
+</div>
+@endif 
+<div class="card border border-dark">
+  <div class="card-header bg-dark clearfix">
+    <h5 class="mb-0 float-left">
+        Daftar
+    </h5>
+  </div>
 
-                        {{-- report type 1 --}}
-                        <tr>
-                            <th>No.Rek</th>
-                            <th>Nama Rekening</th>
-                            <th>Rupiah</th>
-                        </tr>
+    <div class="card-body">
+        <div class="table-responsive pt-5">
+            <table id="" style="width:100%" class="table table-bordered table-full-width">
+                <thead>
+                    <tr>
+                        <td colspan='2' style='text-align:center;'>
+                            <div style='font-weight:bold'>Laporan Rugi / Laba
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan='2' style='text-align:center;'>
+                            <div>
+                                Period {{ date('d-m-Y', strtotime($start_date)) }} s.d. {{ date('d-m-Y', strtotime($end_date)) }}
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan='2'></td>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php $no = 1; 
+                       
+                    ?>
+                    @foreach ($income as $val)
+                        <?php
+                            if($val['report_tab'] == 0){
+                                $report_tab = ' ';
+                            } else if($val['report_tab'] == 1){
+                                $report_tab = '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;';
+                            } else if($val['report_tab'] == 2){
+                                $report_tab = '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;';
+                            } else if($val['report_tab'] == 3){
+                                $report_tab = '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;';
+                            } else if($val['report_tab'] == 4){
+                                $report_tab = '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;';
+                            } else if($val['report_tab'] == 5){
+                                $report_tab = '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;';
+                            } else if($val['report_tab'] == 6){
+                                $report_tab = '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;';
+                            } else if($val['report_tab'] == 7){
+                                $report_tab = '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;';
+                            }
+                             else if($val['report_tab'] == 8){
+                                $report_tab = '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;';
+                            }
 
-                        @foreach ($type1 as $val1)
-                            <tr>
-                                <td>{{ $val1->account_code }}</td>
-                                <td>{{ $val1->account_name }}</td>
-                                <td>{{ number_format($APLR->getAmountAccount($val1->account_id)) }}</td>
-                            </tr>
-                        @endforeach
-                        {{-- report tipe 2 --}}
-                        @foreach ($type2 as $val2)
-                            <tr>
-                                <td>{{ $val2->account_code }}</td>
-                                <td>{{ $val2->account_name }}</td>
-                                <td>{{ number_format($APLR->getAmountAccount($val2->account_id)) }}</td>
-                            </tr>
-                        @endforeach
-                        <tr class="bg-secondary">
-                            <td>-</td>
-                            <td>Total Pendapatan Usaha</td>
-                            <td><?php echo number_format( $totalpendapatanusaha); ?></td>
-                        </tr>
+                            if($val['report_bold'] == 1){
+                                $report_bold = 'bold';
+                            } else {
+                                $report_bold = 'normal';
+                            }
+
+                            echo "
+                                <tr>";
+
+                                if($val['report_type'] == 1){
+                                    echo "
+                                        <td colspan='2'><div style='font-weight:".$report_bold."'>".$report_tab."".$val['account_name']."</div></td>
+                                        ";
+                                }
+                                
+                            echo "
+                                </tr>";
+
+                            echo "
+                                <tr>";
+
+                                if($val['report_type']	== 2){
+                                    echo "
+                                        <td style='width: 75%'><div style='font-weight:".$report_bold."'>".$report_tab."".$val['account_name']."</div></td>
+                                        <td style='width: 25%'><div style='font-weight:".$report_bold."'></div></td>
+                                        ";
+                                }
+                                    
+                            echo "
+                                </tr>";
+
+                            echo "
+                                <tr>";
+
+                                if($val['report_type']	== 3){
+                                    $income_subtotal 	= $APLR->getAmountAccount($val['account_id']);
+
+                                    echo "
+                                        <td><div style='font-weight:".$report_bold."'>".$report_tab."(".$val['account_code'].") ".$val['account_name']."</div> </td>
+                                        <td style='text-align:right'><div style='font-weight:".$report_bold."'>".number_format($income_subtotal, 2)."</div></td>
+                                    ";
+ 
+                                    $account_amount[$val['report_no']] = $income_subtotal;
+                                }
+                                
+                            echo "
+                                </tr>";
+
+                                echo "
+                                <tr>";
+
+                                if($val['report_type']	== 4){
+                                    $income_subtotal 	= $APLR->getAmountAccount($val['account_id']);
+
+                                    $account_amount[$val['report_no']] = $income_subtotal;
+                                }
+                                
+                            echo "
+                                </tr>";
+
+                            echo "
+                                <tr>";
+
+                                if($val['report_type'] == 5){
+                                    if(!empty($val['report_formula']) && !empty($val['report_operator'])){
+                                        $report_formula 	= explode('#', $val['report_formula']);
+                                        $report_operator 	= explode('#', $val['report_operator']);
+
+                                        $total_account_amount	= 0;
+                                        for($i = 0; $i < count($report_formula); $i++){
+                                            if($report_operator[$i] == '-'){
+                                                if($total_account_amount == 0 ){
+                                                    $total_account_amount = $total_account_amount + $account_amount[$report_formula[$i]];
+                                                } else {
+                                                    $total_account_amount = $total_account_amount - $account_amount[$report_formula[$i]];
+                                                }
+                                            } else if($report_operator[$i] == '+'){
+                                                if($total_account_amount == 0){
+                                                    $total_account_amount = $total_account_amount + $account_amount[$report_formula[$i]];
+                                                } else {
+                                                    $total_account_amount = $total_account_amount + $account_amount[$report_formula[$i]];
+                                                }
+                                            }
+                                        }
+
+                                        echo "
+                                            <td><div style='font-weight:".$report_bold."'>".$report_tab."".$val['account_name']."</div></td>
+                                            <td style='text-align:right'><div style='font-weight:".$report_bold."'>".number_format($total_account_amount, 2)."</div></td>
+                                            ";
+                                }
+
+                            }
 
 
-                        {{-- report tipe 3 --}}
-                        @foreach ($type3 as $val3)
-                            <tr>
-                                <td>{{ $val3->account_code }}</td>
-                                <td>{{ $val3->account_name }}</td>
-                                <td>{{ number_format($APLR->getAmountAccount($val3->account_id)) }}</td>
+                            echo "			
+                                </tr>";
 
-                            </tr>
-                        @endforeach
-                        <tr class="bg-secondary">
-                            <td>-</td>
-                            <td>Total HPP</td>
-                            <td><?php echo $totalhpp; ?></td>
-                        </tr>
-                        <tr class="bg-secondary">
-                            <td>-</td>
-                            <td>Total Laba Kotor</td>
-                            <td><?php echo number_format($totallabakotor); ?></td>
-                        </tr>
+                            echo "
+                                </tr>";
 
-                        {{-- report type 4 --}}
-                        @foreach ($type4 as $val4)
-                            <tr>
-                                <td>{{ $val4->account_code }}</td>
-                                <td>{{ $val4->account_name }}</td>
-                                <td>{{ number_format($APLR->getAmountAccount($val4->account_id)) }}</td>
+                                echo "
+                                <tr>";
+                                    
+                                if($val['report_type']	== 6){
+                                    
+                                    $expenditure_subtotal 	= $total_account_amount;
 
-                            </tr>
-                        @endforeach
-                        <tr class="bg-secondary">
-                            <td>0</td>
-                            <td>Total Biaya Usaha</td>
-                            <td><?php echo number_format($totalbiayausaha); ?></td>
-                        </tr>
-                        <tr class="bg-secondary">
-                            <td>0</td>
-                            <td>SHU Sebelum Lain-Lain</td>
-                            <td><?php echo number_format($shulain_lain); ?></td>
-                        </tr>
 
-                        {{-- report type 4 --}}
-                        @foreach ($type5 as $val5)
-                            <tr>
-                                <td>{{ $val5->account_code }}</td>
-                                <td>{{ $val5->account_name }}</td>
-                                <td>{{ number_format($APLR->getAmountAccount($val5->account_id)) }}</td>
-                            </tr>
-                        @endforeach
-                        {{-- report tipe 6 --}}
-                        @foreach ($type6 as $val6)
-                            <tr>
-                                <td>{{ $val6->account_code }}</td>
-                                <td>{{ $val6->account_name }}</td>
-                                <td>{{ number_format($APLR->getAmountAccount($val6->account_id)) }}</td>
+                                    $account_amount[$val['report_no']] = $expenditure_subtotal;
+                                      echo "
+                                            <td><div style='font-weight:".$report_bold."'>".$report_tab."".$val['account_name']."</div></td>
+                                            <td style='text-align:right'><div style='font-weight:".$report_bold."'>".number_format($expenditure_subtotal, 2)."</div></td>
+                                            ";
+                                }
 
-                            </tr>
-                        @endforeach
-                        <tr class="bg-secondary">
-                            <td>0</td>
-                            <td>Pendapatan & Biaya Lainnya</td>
-                            <td><?php echo number_format($pendapatanbiayalain); ?></td>
-                        </tr>
-                        <tr class="bg-secondary">
-                            <td>0</td>
-                            <td>SHU Tahun Berjalan</td>
-                            <td><?php echo number_format($shutahunberjalan); ?></td>
-                        </tr>
-                    </tbody>
-                </table>
+                            echo "
+                                </tr>";
+                             echo "
+                                <tr>";
+                         ?>
+                    @endforeach
+                   
+                    
+                </tbody>
+            </table>
+
+        </div>
+        <div class="text-muted mt-3">
+            <div class="form-actions float-right">
+                <a class="btn btn-secondary" href="{{ url('profit-loss-report/print') }}"><i class="fa fa-file-pdf"></i> Pdf</a>
+                <a class="btn btn-dark" href="{{ url('profit-loss-report/export') }}"><i class="fa fa-download"></i> Export Data</a>
             </div>
-           
         </div>
-    </div>
-    </div>
+  </div>
+</div>
+</div>
 
 @stop
 
