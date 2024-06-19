@@ -17,6 +17,7 @@
         "laravelcollective/html": "^6.2",
         "maatwebsite/excel": "^3.1",
         "phpoffice/phpspreadsheet": "^1.18",
+        "spatie/laravel-activitylog": "^3.17",
         "yajra/laravel-datatables-oracle": "^9.21"
     },
     "require-dev": {
