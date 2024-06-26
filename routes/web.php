@@ -82,14 +82,15 @@ Route::get('/select-item-category/{id}', [HomeController::class, 'selectItemCate
 Route::get('/select-item/{id}', [HomeController::class, 'selectItem']);
 Route::get('/select-item-auto/{item_id}', [HomeController::class, 'selectItemAuto']);
 Route::get('/select-item-unit/{id}', [HomeController::class, 'selectItemUnit']);
-Route::get('/select-item-cost/{item_packge_id}', [HomeController::class, 'selectItemCost']);
-Route::get('/select-item-price/{item_packge_id}', [HomeController::class, 'selectItemPrice']);
-Route::get('/get-margin-category/{item_packge_id}', [HomeController::class, 'getMarginCategory']);
+Route::get('/select-item-cost/{item_packge_id?}', [HomeController::class, 'selectItemCost'])->name('select-item-cost');
+Route::get('/select-item-price/{item_packge_id?}', [HomeController::class, 'selectItemPrice'])->name('select-item-price');
+Route::get('/get-margin-category/{item_packge_id?}', [HomeController::class, 'getMarginCategory'])->name('get-margin-category');
 Route::get('/amount/sales-invoice/{day}', [HomeController::class, 'getAmountSalesInvoice']);
 Route::get('/amount/purchase-invoice/{day}', [HomeController::class, 'getAmountPurchaseInvoice']);
 Route::get('/select-sales/{item}', [SalesInvoiceController::class, 'selectSalesInvoice']);
 Route::get('/select-sales/{item_name}/{unit_id}', [SalesInvoiceController::class, 'selectItemNameSalesInvoice']);
 Route::get('/sales-invoice/change-qty/{item}/{qty}', [SalesInvoiceController::class, 'changeQtySalesInvoice']);
+Route::get('sales-invoice/item-detail/{item_packge_id?}',[PurchaseInvoiceController::class, 'getPurchaseItemDetail'])->name('select-item-detail');
 
 Route::get('/item-unit', [InvtItemUnitController::class, 'index'])->name('item-unit');
 Route::get('/item-unit/add', [InvtItemUnitController::class, 'addInvtItemUnit'])->name('add-item-unit');
