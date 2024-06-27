@@ -8,5 +8,5 @@ use Illuminate\Database\Eloquent\Model;
 class AcctCreditAccount extends Model
 {
     protected $connection = 'mysql2';
-    protected $table = 'ciptaprocpanel_kopkar_menjanganenam_online.acct_credits_account';
+    protected $table = 'ciptaprocpanel_kopkar_menjanganenam.acct_credits_account';
 }
