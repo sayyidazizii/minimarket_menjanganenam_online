@@ -10,6 +10,7 @@ use App\Models\AcctProfitLossReport;
 use App\Models\CloseCashierLog;
 use App\Models\CoreEmployee;
 use App\Models\CoreMember;
+use App\Models\CoreMemberKopkar;
 use App\Models\Expenditure;
 use App\Models\InvtItem;
 use App\Models\InvtItemBarcode;
@@ -654,29 +655,26 @@ class ApiController extends Controller
         return json_encode($data);
     }
 
-    // public function getDataCoreEmployee()
-    // {
+    public function getDataCoreMember()
+    {
+        $core_member = CoreMemberKopkar::where('data_state',0)
+        ->get();
 
+        $core_member = CoreMemberKopkar::get();
 
-    //     $core_member = CoreEmployee::where('data_state',0)
-    //     ->get();
+        return json_encode($core_member);
+    }
 
-    //     $core_member = CoreEmployee::get();
+    
+    public function postDataCoreMemberKopkar(Request $request)
+    {
+        $data_member = CoreMemberKopkar::where('member_no',$request->member_no)
+        ->first();
+        $data = CoreMemberKopkar::where('member_no',$request->member_no)
+        ->update(['member_account_receivable_amount' => $data_member['member_account_receivable_amount'] + $request->member_account_receivable_amount_temp, 'member_account_credits_store_debt' => $data_member['member_account_credits_store_debt'] + $request->member_account_receivable_amount_temp]);
 
-    //     return json_encode($core_member);
-    // }
-
-    // public function postDataCoreEmployee(Request $request)
-    // {
-
-    //     $data_member = CoreEmployee::where('employee_number',$request->employee_number)
-    //     ->first();
-
-    //     $data = CoreEmployee::where('employee_number',$request->employee_number)
-    //     ->update(['amount_debt' => $data_member['amount_debt'] + $request->amount_debt]);
-
-    //     return $data;
-    // }
+        return $data;
+    }
 
     public function getDataItemRack()
     {
@@ -684,7 +682,6 @@ class ApiController extends Controller
 
         return json_encode($data);
     }
-
 
     public function getDataPreferenceVoucher()
     {
