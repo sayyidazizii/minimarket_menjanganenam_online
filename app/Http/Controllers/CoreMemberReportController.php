@@ -261,7 +261,7 @@ class CoreMemberReportController extends Controller
                 <tr nobr=\"true\">			
                     <td style=\"text-align:center\">$no.</td>
                     <td style=\"text-align:left\">".$val['member_no']."</td>
-                    <td style=\"text-align:left\">".$val['division_name']."</td>
+                    <td style=\"text-align:left\">".$val['member_division_name']."</td>
                     <td style=\"text-align:left\">".$val['member_name']."</td>
                     <td style=\"text-align:right\">".$this->getTotalTransaction($val['member_id'])."</td>
                     <td style=\"text-align:right\">".$this->getTotalItem($val['member_id'])."</td>
@@ -304,7 +304,7 @@ class CoreMemberReportController extends Controller
         } else {
             $end_date = Session::get('end_date');
         }
-        $data_member = CoreMember::select('member_name', 'member_id', 'division_name', 'member_no')
+        $data_member = CoreMember::select('member_name', 'member_id', 'member_division_name', 'member_no')
         ->where('data_state',0)
         ->where('company_id', Auth::user()->company_id)
         ->get();
@@ -381,7 +381,7 @@ class CoreMemberReportController extends Controller
                         $no++;
                         $sheet->setCellValue('B'.$j, $no);
                         $sheet->setCellValue('C'.$j, $val['member_no']);
-                        $sheet->setCellValue('D'.$j, $val['division_name']);
+                        $sheet->setCellValue('D'.$j, $val['member_division_name']);
                         $sheet->setCellValue('E'.$j, $val['member_name']);
                         $sheet->setCellValue('F'.$j, $this->getTotalTransaction($val['member_id']));
                         $sheet->setCellValue('G'.$j, $this->getTotalItem($val['member_id']));
@@ -630,7 +630,7 @@ class CoreMemberReportController extends Controller
         $searchValue 		= $searchArray['value'];
         $valueArray         = explode (" ",$searchValue);
 
-        $table = CoreMember::select('member_name', 'member_id', 'division_name', 'member_no')
+        $table = CoreMember::select('member_name', 'member_id', 'member_division_name', 'member_no')
         ->where('data_state',0)
         ->where('company_id', Auth::user()->company_id);
         $total = $table->count();
@@ -641,12 +641,12 @@ class CoreMemberReportController extends Controller
                 foreach ($valueArray as $key => $val) {
                     $totalFilter = $totalFilter->where('member_name','like','%'.$val.'%');
                     $totalFilter = $totalFilter->orWhere('member_no','like','%'.$val.'%');
-                    $totalFilter = $totalFilter->orWhere('division_name','like','%'.$val.'%');
+                    $totalFilter = $totalFilter->orWhere('member_division_name','like','%'.$val.'%');
                 }
             } else {
                 $totalFilter = $totalFilter->where('member_name','like','%'.$searchValue.'%');
                 $totalFilter = $totalFilter->orWhere('member_no','like','%'.$searchValue.'%');
-                $totalFilter = $totalFilter->orWhere('division_name','like','%'.$searchValue.'%');
+                $totalFilter = $totalFilter->orWhere('member_division_name','like','%'.$searchValue.'%');
             }
         }
         $totalFilter = $totalFilter->count();
@@ -659,12 +659,12 @@ class CoreMemberReportController extends Controller
                 foreach ($valueArray as $key => $val) {
                     $arrayData = $arrayData->where('member_name','like','%'.$val.'%');
                     $arrayData = $arrayData->orWhere('member_no','like','%'.$val.'%');
-                    $arrayData = $arrayData->orWhere('division_name','like','%'.$val.'%');
+                    $arrayData = $arrayData->orWhere('member_division_name','like','%'.$val.'%');
                 }
             } else {
                 $arrayData = $arrayData->where('member_name','like','%'.$searchValue.'%');
                 $arrayData = $arrayData->orWhere('member_no','like','%'.$searchValue.'%');
-                $arrayData = $arrayData->orWhere('division_name','like','%'.$searchValue.'%');
+                $arrayData = $arrayData->orWhere('member_division_name','like','%'.$searchValue.'%');
             }
         }
         $arrayData = $arrayData->get();
@@ -676,7 +676,7 @@ class CoreMemberReportController extends Controller
             $row = array();
             $row['member_id']           = "<div class='text-center'>".$no.".</div>";
             $row['member_no']           = $val['member_no'];
-            $row['division_name']       = $val['division_name'];
+            $row['division_name']       = $val['member_division_name'];
             $row['member_name']         = $val['member_name'];
             $row['total_transaction']   = $this->getTotalTransaction($val['member_id']);
             $row['total_item']          = $this->getTotalItem($val['member_id']);
