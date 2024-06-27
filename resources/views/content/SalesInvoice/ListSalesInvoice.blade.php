@@ -133,7 +133,7 @@
                     <tr>
                         <td style='text-align:center'>{{ $no++ }}.</td>
                         <td>{{ $row['member_no'] }}</td>
-                        <td>{{ $row['division_name'] }}</td>
+                        <td>{{ $row['member_division_name'] }}</td>
                         <td>{{ $row['member_name'] }}</td>
                         <td>{{ date('d-m-Y', strtotime($row['sales_invoice_date'])) }}</td>
                         <td>{{ $row['sales_invoice_no'] }}</td>
