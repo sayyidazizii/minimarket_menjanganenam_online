@@ -1,6 +1,6 @@
 /*
 SQLyog Professional v13.1.1 (64 bit)
-MySQL - 10.4.28-MariaDB : Database - ciptaprocpanel_minimarket_menjanganenam
+MySQL - 8.0.30 : Database - ciptaprocpanel_minimarket_menjanganenam
 *********************************************************************
 */
 
@@ -12,41 +12,39 @@ MySQL - 10.4.28-MariaDB : Database - ciptaprocpanel_minimarket_menjanganenam
 /*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
 /*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
-USE `ciptaprocpanel_minimarket_menjanganenam`;
-
 /*Table structure for table `acct_account` */
 
 DROP TABLE IF EXISTS `acct_account`;
 
 CREATE TABLE `acct_account` (
-  `account_id` int(11) NOT NULL AUTO_INCREMENT,
-  `account_type_id` int(11) DEFAULT 0,
+  `account_id` int NOT NULL AUTO_INCREMENT,
+  `account_type_id` int DEFAULT '0',
   `account_code` varchar(20) DEFAULT '',
-  `company_id` int(11) NOT NULL DEFAULT 1,
+  `company_id` int NOT NULL DEFAULT '1',
   `account_name` varchar(100) DEFAULT '',
   `account_group` varchar(20) DEFAULT '',
-  `account_suspended` decimal(1,0) DEFAULT 0 COMMENT '1 : Yes, 0 : No',
-  `parent_account_status` int(11) NOT NULL DEFAULT 0,
-  `parent_account_id` int(11) DEFAULT 0,
-  `top_parent_account_id` int(11) DEFAULT 0,
+  `account_suspended` decimal(1,0) DEFAULT '0' COMMENT '1 : Yes, 0 : No',
+  `parent_account_status` int NOT NULL DEFAULT '0',
+  `parent_account_id` int DEFAULT '0',
+  `top_parent_account_id` int DEFAULT '0',
   `account_has_child` enum('1','0') DEFAULT '0',
-  `opening_debit_balance` decimal(20,2) DEFAULT 0.00,
-  `opening_credit_balance` decimal(20,2) DEFAULT 0.00,
-  `debit_change` decimal(20,2) DEFAULT 0.00,
-  `credit_change` decimal(20,2) DEFAULT 0.00,
-  `account_default_status` int(11) NOT NULL DEFAULT 0,
-  `account_remark` text DEFAULT NULL,
-  `account_status` decimal(1,0) DEFAULT 1,
-  `data_state` decimal(1,0) DEFAULT 0,
-  `created_id` int(11) NOT NULL DEFAULT 0,
+  `opening_debit_balance` decimal(20,2) DEFAULT '0.00',
+  `opening_credit_balance` decimal(20,2) DEFAULT '0.00',
+  `debit_change` decimal(20,2) DEFAULT '0.00',
+  `credit_change` decimal(20,2) DEFAULT '0.00',
+  `account_default_status` int NOT NULL DEFAULT '0',
+  `account_remark` text,
+  `account_status` decimal(1,0) DEFAULT '1',
+  `data_state` decimal(1,0) DEFAULT '0',
+  `created_id` int NOT NULL DEFAULT '0',
   `created_at` datetime DEFAULT NULL,
-  `updated_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`account_id`),
   KEY `FK_acct_account_account_type_id` (`account_type_id`),
   KEY `account_code` (`account_code`),
   KEY `parent_account_id` (`parent_account_id`),
   KEY `account_group` (`account_group`)
-) ENGINE=InnoDB AUTO_INCREMENT=535 DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=535 DEFAULT CHARSET=utf8mb3;
 
 /*Data for the table `acct_account` */
 
@@ -591,60 +589,72 @@ insert  into `acct_account`(`account_id`,`account_type_id`,`account_code`,`compa
 DROP TABLE IF EXISTS `acct_account_balance`;
 
 CREATE TABLE `acct_account_balance` (
-  `account_balance_id` int(10) NOT NULL AUTO_INCREMENT,
-  `company_id` int(10) DEFAULT NULL,
-  `account_id` int(10) DEFAULT NULL,
-  `last_balance` varchar(225) DEFAULT NULL,
-  `created_id` int(10) DEFAULT NULL,
-  `last_update` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `account_balance_id` int NOT NULL AUTO_INCREMENT,
+  `company_id` int DEFAULT NULL,
+  `account_id` int DEFAULT NULL,
+  `last_balance` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `created_id` int DEFAULT NULL,
+  `last_update` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`account_balance_id`),
   KEY `fk_company_id_account_balence` (`company_id`),
   KEY `fk_account_id_account_balence` (`account_id`),
   CONSTRAINT `fk_account_id_account_balence` FOREIGN KEY (`account_id`) REFERENCES `acct_account` (`account_id`),
   CONSTRAINT `fk_company_id_account_balence` FOREIGN KEY (`company_id`) REFERENCES `preference_company` (`company_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=49 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 /*Data for the table `acct_account_balance` */
+
+insert  into `acct_account_balance`(`account_balance_id`,`company_id`,`account_id`,`last_balance`,`created_id`,`last_update`) values 
+(1,1,39,'-13500',55,'2024-06-27 17:18:06'),
+(2,1,326,'-13500',55,'2024-06-27 17:18:06'),
+(3,1,375,'-9046',55,'2024-06-27 17:18:06'),
+(4,1,82,'9046',55,'2024-06-27 17:18:06');
 
 /*Table structure for table `acct_account_balance_detail` */
 
 DROP TABLE IF EXISTS `acct_account_balance_detail`;
 
 CREATE TABLE `acct_account_balance_detail` (
-  `account_balance_detail_id` int(10) NOT NULL AUTO_INCREMENT,
-  `company_id` int(10) DEFAULT NULL,
-  `account_id` int(10) DEFAULT NULL,
-  `transaction_id` int(10) DEFAULT NULL,
-  `transaction_type` varchar(225) DEFAULT NULL,
-  `transaction_code` varchar(225) DEFAULT NULL,
-  `transaction_date` varchar(225) DEFAULT NULL,
-  `opening_balance` varchar(225) DEFAULT NULL,
-  `account_in` varchar(225) DEFAULT NULL,
-  `account_out` varchar(225) DEFAULT NULL,
-  `last_balance` varchar(225) DEFAULT NULL,
-  `created_id` int(10) DEFAULT NULL,
-  `data_state` int(1) DEFAULT 0,
-  `last_update` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `account_balance_detail_id` int NOT NULL AUTO_INCREMENT,
+  `company_id` int DEFAULT NULL,
+  `account_id` int DEFAULT NULL,
+  `transaction_id` int DEFAULT NULL,
+  `transaction_type` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `transaction_code` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `transaction_date` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `opening_balance` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `account_in` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `account_out` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `last_balance` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `created_id` int DEFAULT NULL,
+  `data_state` int DEFAULT '0',
+  `last_update` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`account_balance_detail_id`),
   KEY `fk_company_id_account_balance_detail` (`company_id`),
   KEY `fk_account_id_balance_detail` (`account_id`),
   KEY `fk_transaction_id_balance_detail` (`transaction_id`),
   CONSTRAINT `fk_account_id_balance_detail` FOREIGN KEY (`account_id`) REFERENCES `acct_account` (`account_id`),
   CONSTRAINT `fk_company_id_account_balance_detail` FOREIGN KEY (`company_id`) REFERENCES `preference_company` (`company_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=103 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 /*Data for the table `acct_account_balance_detail` */
+
+insert  into `acct_account_balance_detail`(`account_balance_detail_id`,`company_id`,`account_id`,`transaction_id`,`transaction_type`,`transaction_code`,`transaction_date`,`opening_balance`,`account_in`,`account_out`,`last_balance`,`created_id`,`data_state`,`last_update`) values 
+(1,1,39,231,'4','PJL','2024-06-27','0','0','13500','-13500',55,0,'2024-06-27 17:18:06'),
+(2,1,326,231,'4','PJL','2024-06-27','0','0','13500','-13500',55,0,'2024-06-27 17:18:06'),
+(3,1,375,231,'4','PJL','2024-06-27','0','0','9046','-9046',55,0,'2024-06-27 17:18:06'),
+(4,1,82,231,'4','PJL','2024-06-27','0','9046','0','9046',55,0,'2024-06-27 17:18:06');
 
 /*Table structure for table `acct_account_setting` */
 
 DROP TABLE IF EXISTS `acct_account_setting`;
 
 CREATE TABLE `acct_account_setting` (
-  `account_setting_id` int(10) NOT NULL AUTO_INCREMENT,
-  `company_id` int(10) DEFAULT NULL,
-  `account_id` int(10) DEFAULT NULL,
-  `account_setting_name` varchar(225) DEFAULT NULL,
-  `account_setting_status` int(1) DEFAULT NULL,
+  `account_setting_id` int NOT NULL AUTO_INCREMENT,
+  `company_id` int DEFAULT NULL,
+  `account_id` int DEFAULT NULL,
+  `account_setting_name` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `account_setting_status` int DEFAULT NULL,
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL,
   PRIMARY KEY (`account_setting_id`),
@@ -695,34 +705,34 @@ insert  into `acct_account_setting`(`account_setting_id`,`company_id`,`account_i
 DROP TABLE IF EXISTS `acct_balance_sheet_report`;
 
 CREATE TABLE `acct_balance_sheet_report` (
-  `balance_sheet_report_id` bigint(20) NOT NULL AUTO_INCREMENT,
-  `report_no` int(11) DEFAULT 0,
-  `account_id1` int(11) DEFAULT 0,
+  `balance_sheet_report_id` bigint NOT NULL AUTO_INCREMENT,
+  `report_no` int DEFAULT '0',
+  `account_id1` int DEFAULT '0',
   `account_code1` varchar(20) DEFAULT '',
   `account_name1` varchar(100) DEFAULT '',
-  `account_id2` int(11) DEFAULT 0,
+  `account_id2` int DEFAULT '0',
   `account_code2` varchar(20) DEFAULT '',
   `account_name2` varchar(100) DEFAULT '',
   `report_formula1` varchar(500) DEFAULT '',
   `report_operator1` varchar(255) DEFAULT '',
-  `report_type1` int(11) DEFAULT 0,
-  `report_tab1` int(11) DEFAULT 0,
-  `report_bold1` int(11) DEFAULT 0,
+  `report_type1` int DEFAULT '0',
+  `report_tab1` int DEFAULT '0',
+  `report_bold1` int DEFAULT '0',
   `report_formula2` varchar(500) DEFAULT '',
   `report_operator2` varchar(255) DEFAULT '',
-  `report_type2` int(11) DEFAULT 0,
-  `report_tab2` int(11) DEFAULT 0,
-  `report_bold2` int(11) DEFAULT 0,
+  `report_type2` int DEFAULT '0',
+  `report_tab2` int DEFAULT '0',
+  `report_bold2` int DEFAULT '0',
   `report_formula3` varchar(255) DEFAULT '',
   `report_operator3` varchar(255) DEFAULT '',
-  `data_state` int(11) DEFAULT 0,
-  `created_id` int(11) DEFAULT 0,
+  `data_state` int DEFAULT '0',
+  `created_id` int DEFAULT '0',
   `created_at` datetime DEFAULT NULL,
   `updated_at` time DEFAULT '00:00:00',
   PRIMARY KEY (`balance_sheet_report_id`),
   KEY `account_id1` (`account_id1`),
   KEY `account_id2` (`account_id2`)
-) ENGINE=InnoDB AUTO_INCREMENT=188 DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=188 DEFAULT CHARSET=utf8mb3;
 
 /*Data for the table `acct_balance_sheet_report` */
 
@@ -920,24 +930,24 @@ insert  into `acct_balance_sheet_report`(`balance_sheet_report_id`,`report_no`,`
 DROP TABLE IF EXISTS `acct_journal_voucher`;
 
 CREATE TABLE `acct_journal_voucher` (
-  `journal_voucher_id` int(10) NOT NULL AUTO_INCREMENT,
-  `company_id` int(10) DEFAULT NULL,
-  `transaction_module_id` int(10) DEFAULT NULL,
-  `journal_voucher_status` int(1) DEFAULT 0,
-  `transaction_journal_no` varchar(225) DEFAULT NULL,
-  `transaction_module_code` varchar(225) DEFAULT NULL,
-  `journal_voucher_date` varchar(225) DEFAULT NULL,
-  `journal_voucher_description` varchar(225) DEFAULT NULL,
-  `journal_voucher_period` varchar(225) DEFAULT NULL,
-  `journal_voucher_no` varchar(225) DEFAULT NULL,
-  `journal_voucher_title` varchar(225) DEFAULT NULL,
-  `voided` int(1) DEFAULT 0,
-  `voided_id` int(10) DEFAULT NULL,
+  `journal_voucher_id` int NOT NULL AUTO_INCREMENT,
+  `company_id` int DEFAULT NULL,
+  `transaction_module_id` int DEFAULT NULL,
+  `journal_voucher_status` int DEFAULT '0',
+  `transaction_journal_no` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `transaction_module_code` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `journal_voucher_date` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `journal_voucher_description` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `journal_voucher_period` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `journal_voucher_no` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `journal_voucher_title` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `voided` int DEFAULT '0',
+  `voided_id` int DEFAULT NULL,
   `voided_on` datetime DEFAULT NULL,
-  `voided_remark` varchar(225) DEFAULT NULL,
-  `data_state` int(10) DEFAULT 0,
-  `created_id` int(10) DEFAULT NULL,
-  `updated_id` int(10) DEFAULT NULL,
+  `voided_remark` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `data_state` int DEFAULT '0',
+  `created_id` int DEFAULT NULL,
+  `updated_id` int DEFAULT NULL,
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL,
   PRIMARY KEY (`journal_voucher_id`),
@@ -945,64 +955,73 @@ CREATE TABLE `acct_journal_voucher` (
   KEY `fk_transaction_module_id_journal_voucher` (`transaction_module_id`),
   CONSTRAINT `fk_company_id_journal_voucher` FOREIGN KEY (`company_id`) REFERENCES `preference_company` (`company_id`),
   CONSTRAINT `fk_transaction_module_id_journal_voucher` FOREIGN KEY (`transaction_module_id`) REFERENCES `preference_transaction_module` (`transaction_module_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=224 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=232 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 /*Data for the table `acct_journal_voucher` */
+
+insert  into `acct_journal_voucher`(`journal_voucher_id`,`company_id`,`transaction_module_id`,`journal_voucher_status`,`transaction_journal_no`,`transaction_module_code`,`journal_voucher_date`,`journal_voucher_description`,`journal_voucher_period`,`journal_voucher_no`,`journal_voucher_title`,`voided`,`voided_id`,`voided_on`,`voided_remark`,`data_state`,`created_id`,`updated_id`,`created_at`,`updated_at`) values 
+(231,1,4,1,'KR2024060001','PJL','2024-06-27','Penjualan Kredit Non BKP','202406','0001/JV/VI/2024','Penjualan',0,NULL,NULL,NULL,0,55,55,'2024-06-27 17:18:06','2024-06-27 17:18:06');
 
 /*Table structure for table `acct_journal_voucher_item` */
 
 DROP TABLE IF EXISTS `acct_journal_voucher_item`;
 
 CREATE TABLE `acct_journal_voucher_item` (
-  `journal_voucher_item_id` int(10) NOT NULL AUTO_INCREMENT,
-  `company_id` int(10) DEFAULT NULL,
-  `journal_voucher_id` int(10) DEFAULT NULL,
-  `account_id` int(10) DEFAULT NULL,
-  `journal_voucher_amount` varchar(225) DEFAULT '0',
-  `account_id_status` int(1) DEFAULT NULL,
-  `account_id_default_status` int(1) DEFAULT NULL,
-  `journal_voucher_debit_amount` varchar(225) DEFAULT '0',
-  `journal_voucher_credit_amount` varchar(225) DEFAULT '0',
-  `data_state` int(10) DEFAULT 0,
-  `created_id` int(10) DEFAULT NULL,
-  `updated_id` int(10) DEFAULT NULL,
+  `journal_voucher_item_id` int NOT NULL AUTO_INCREMENT,
+  `company_id` int DEFAULT NULL,
+  `journal_voucher_id` int DEFAULT NULL,
+  `account_id` int DEFAULT NULL,
+  `journal_voucher_amount` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT '0',
+  `account_id_status` int DEFAULT NULL,
+  `account_id_default_status` int DEFAULT NULL,
+  `journal_voucher_debit_amount` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT '0',
+  `journal_voucher_credit_amount` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT '0',
+  `data_state` int DEFAULT '0',
+  `created_id` int DEFAULT NULL,
+  `updated_id` int DEFAULT NULL,
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL,
   PRIMARY KEY (`journal_voucher_item_id`),
   KEY `Fk_journal_voucher` (`journal_voucher_id`),
   KEY `fk_company_id_journal_voucher_item` (`company_id`),
   KEY `fk_account_id_journal_voucher_item` (`account_id`),
-  CONSTRAINT `Fk_journal_voucher` FOREIGN KEY (`journal_voucher_id`) REFERENCES `acct_journal_voucher` (`journal_voucher_id`),
   CONSTRAINT `fk_account_id_journal_voucher_item` FOREIGN KEY (`account_id`) REFERENCES `acct_account` (`account_id`),
-  CONSTRAINT `fk_company_id_journal_voucher_item` FOREIGN KEY (`company_id`) REFERENCES `preference_company` (`company_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=194 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  CONSTRAINT `fk_company_id_journal_voucher_item` FOREIGN KEY (`company_id`) REFERENCES `preference_company` (`company_id`),
+  CONSTRAINT `Fk_journal_voucher` FOREIGN KEY (`journal_voucher_id`) REFERENCES `acct_journal_voucher` (`journal_voucher_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 /*Data for the table `acct_journal_voucher_item` */
+
+insert  into `acct_journal_voucher_item`(`journal_voucher_item_id`,`company_id`,`journal_voucher_id`,`account_id`,`journal_voucher_amount`,`account_id_status`,`account_id_default_status`,`journal_voucher_debit_amount`,`journal_voucher_credit_amount`,`data_state`,`created_id`,`updated_id`,`created_at`,`updated_at`) values 
+(1,1,231,39,'13500',0,1,'13500','0',0,55,55,'2024-06-27 17:18:06','2024-06-27 17:18:06'),
+(2,1,231,326,'13500',1,0,'0','13500',0,55,55,'2024-06-27 17:18:06','2024-06-27 17:18:06'),
+(3,1,231,375,'9046',0,1,'9046','0',0,55,55,'2024-06-27 17:18:06','2024-06-27 17:18:06'),
+(4,1,231,82,'9046',1,1,'0','9046',0,55,55,'2024-06-27 17:18:06','2024-06-27 17:18:06');
 
 /*Table structure for table `acct_profit_loss_combined_report` */
 
 DROP TABLE IF EXISTS `acct_profit_loss_combined_report`;
 
 CREATE TABLE `acct_profit_loss_combined_report` (
-  `profit_loss_combined_report_id` int(10) NOT NULL AUTO_INCREMENT,
-  `company_id` int(10) DEFAULT NULL,
-  `format_id` int(10) DEFAULT NULL,
-  `report_no` int(10) DEFAULT NULL,
-  `account_type_id` int(10) DEFAULT NULL,
-  `account_id1` int(10) DEFAULT NULL,
-  `account_id2` int(10) DEFAULT NULL,
-  `account_code1` varchar(250) DEFAULT NULL,
-  `account_code2` varchar(250) DEFAULT NULL,
-  `account_name` varchar(250) DEFAULT NULL,
-  `report_formula` varchar(250) DEFAULT NULL,
-  `report_operator` varchar(250) DEFAULT NULL,
-  `report_type` int(1) DEFAULT NULL,
-  `report_tab` int(1) DEFAULT NULL,
-  `report_bold` int(1) DEFAULT NULL,
-  `data_state` int(1) DEFAULT NULL,
-  `created_id` int(1) DEFAULT NULL,
+  `profit_loss_combined_report_id` int NOT NULL AUTO_INCREMENT,
+  `company_id` int DEFAULT NULL,
+  `format_id` int DEFAULT NULL,
+  `report_no` int DEFAULT NULL,
+  `account_type_id` int DEFAULT NULL,
+  `account_id1` int DEFAULT NULL,
+  `account_id2` int DEFAULT NULL,
+  `account_code1` varchar(250) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `account_code2` varchar(250) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `account_name` varchar(250) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `report_formula` varchar(250) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `report_operator` varchar(250) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `report_type` int DEFAULT NULL,
+  `report_tab` int DEFAULT NULL,
+  `report_bold` int DEFAULT NULL,
+  `data_state` int DEFAULT NULL,
+  `created_id` int DEFAULT NULL,
   `created_on` datetime DEFAULT NULL,
-  `last_update` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `last_update` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`profit_loss_combined_report_id`),
   KEY `fk_company_id_commbined_report` (`company_id`),
   CONSTRAINT `fk_company_id_commbined_report` FOREIGN KEY (`company_id`) REFERENCES `preference_company` (`company_id`)
@@ -1062,27 +1081,27 @@ insert  into `acct_profit_loss_combined_report`(`profit_loss_combined_report_id`
 DROP TABLE IF EXISTS `acct_profit_loss_report`;
 
 CREATE TABLE `acct_profit_loss_report` (
-  `profit_loss_report_id` bigint(20) NOT NULL AUTO_INCREMENT,
-  `report_no` int(11) DEFAULT 0,
-  `account_type_id` int(11) DEFAULT 0,
-  `account_id` int(11) DEFAULT 0,
+  `profit_loss_report_id` bigint NOT NULL AUTO_INCREMENT,
+  `report_no` int DEFAULT '0',
+  `account_type_id` int DEFAULT '0',
+  `account_id` int DEFAULT '0',
   `account_code` varchar(20) DEFAULT '',
   `account_name` varchar(100) DEFAULT '',
-  `report_formula` text DEFAULT NULL,
-  `report_operator` text DEFAULT NULL,
-  `report_type` int(11) DEFAULT 0 COMMENT '1 : TITLE, 2 : SUBTITLE, 3 : LOOP, 4 : OPENING, 5 :SUBTOTAL, 6 : TOTAL',
-  `report_tab` int(11) DEFAULT 0,
-  `report_bold` int(11) DEFAULT 0,
-  `amount_tab` int(11) NOT NULL DEFAULT 0,
-  `data_state` int(11) DEFAULT 0,
-  `created_id` int(11) DEFAULT 0,
+  `report_formula` text,
+  `report_operator` text,
+  `report_type` int DEFAULT '0' COMMENT '1 : TITLE, 2 : SUBTITLE, 3 : LOOP, 4 : OPENING, 5 :SUBTOTAL, 6 : TOTAL',
+  `report_tab` int DEFAULT '0',
+  `report_bold` int DEFAULT '0',
+  `amount_tab` int NOT NULL DEFAULT '0',
+  `data_state` int DEFAULT '0',
+  `created_id` int DEFAULT '0',
   `created_at` datetime DEFAULT NULL,
-  `updated_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`profit_loss_report_id`),
   KEY `account_type_id` (`account_type_id`),
   KEY `account_id` (`account_id`),
   KEY `report_no` (`report_no`)
-) ENGINE=InnoDB AUTO_INCREMENT=216 DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=216 DEFAULT CHARSET=utf8mb3;
 
 /*Data for the table `acct_profit_loss_report` */
 
@@ -1308,21 +1327,21 @@ insert  into `acct_profit_loss_report`(`profit_loss_report_id`,`report_no`,`acco
 DROP TABLE IF EXISTS `acct_supplier_balance`;
 
 CREATE TABLE `acct_supplier_balance` (
-  `supplier_balance_id` int(10) NOT NULL AUTO_INCREMENT,
-  `company_id` int(10) DEFAULT NULL,
-  `supplier_id` int(10) DEFAULT NULL,
-  `supplier_balance_remark` varchar(225) DEFAULT NULL,
-  `transaction_no` varchar(225) DEFAULT NULL,
-  `supplier_balance_date` varchar(225) DEFAULT NULL,
-  `opening_balance` varchar(225) DEFAULT NULL,
-  `payable_amount` varchar(225) DEFAULT NULL,
-  `payment_amount` varchar(225) DEFAULT NULL,
-  `last_balance` varchar(225) DEFAULT NULL,
-  `data_state` int(10) DEFAULT 0,
-  `created_id` int(10) DEFAULT NULL,
-  `updated_id` int(10) DEFAULT NULL,
-  `created_at` datetime DEFAULT current_timestamp(),
-  `updated_at` datetime DEFAULT current_timestamp(),
+  `supplier_balance_id` int NOT NULL AUTO_INCREMENT,
+  `company_id` int DEFAULT NULL,
+  `supplier_id` int DEFAULT NULL,
+  `supplier_balance_remark` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `transaction_no` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `supplier_balance_date` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `opening_balance` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `payable_amount` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `payment_amount` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `last_balance` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `data_state` int DEFAULT '0',
+  `created_id` int DEFAULT NULL,
+  `updated_id` int DEFAULT NULL,
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`supplier_balance_id`),
   KEY `fk_company_id_supplier_balance` (`company_id`),
   KEY `fk_supplier_id_supplier_balance` (`supplier_id`),
@@ -1337,14 +1356,14 @@ CREATE TABLE `acct_supplier_balance` (
 DROP TABLE IF EXISTS `capital_money`;
 
 CREATE TABLE `capital_money` (
-  `capital_money_id` int(10) NOT NULL AUTO_INCREMENT,
-  `company_id` int(10) DEFAULT NULL,
+  `capital_money_id` int NOT NULL AUTO_INCREMENT,
+  `company_id` int DEFAULT NULL,
   `capital_money_date` date DEFAULT NULL,
-  `capital_money_amount` int(10) DEFAULT NULL,
-  `data_state` int(1) DEFAULT 0,
-  `created_id` int(10) DEFAULT NULL,
+  `capital_money_amount` int DEFAULT NULL,
+  `data_state` int DEFAULT '0',
+  `created_id` int DEFAULT NULL,
   `created_at` datetime DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`capital_money_id`),
   KEY `fk_company_id_capital_money` (`company_id`),
   CONSTRAINT `fk_company_id_capital_money` FOREIGN KEY (`company_id`) REFERENCES `preference_company` (`company_id`)
@@ -1357,23 +1376,23 @@ CREATE TABLE `capital_money` (
 DROP TABLE IF EXISTS `close_cashier_log`;
 
 CREATE TABLE `close_cashier_log` (
-  `cashier_log_id` int(10) NOT NULL AUTO_INCREMENT,
-  `company_id` int(10) DEFAULT NULL,
-  `cashier_log_date` varchar(250) DEFAULT NULL,
-  `shift_cashier` varchar(250) DEFAULT NULL,
-  `total_cash_transaction` varchar(250) DEFAULT NULL,
-  `amount_cash_transaction` varchar(250) DEFAULT NULL,
-  `total_receivable_transaction` varchar(250) DEFAULT NULL,
-  `amount_receivable_transaction` varchar(250) DEFAULT NULL,
-  `total_cashless_transaction` varchar(250) DEFAULT NULL,
-  `amount_cashless_transaction` varchar(250) DEFAULT NULL,
-  `total_transaction` varchar(250) DEFAULT NULL,
-  `total_amount` varchar(250) DEFAULT NULL,
-  `status_upload` int(1) DEFAULT 0,
-  `from_store` int(1) NOT NULL DEFAULT 1,
-  `data_state` int(1) DEFAULT 0,
-  `created_id` int(10) DEFAULT NULL,
-  `updated_id` int(10) DEFAULT NULL,
+  `cashier_log_id` int NOT NULL AUTO_INCREMENT,
+  `company_id` int DEFAULT NULL,
+  `cashier_log_date` varchar(250) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `shift_cashier` varchar(250) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `total_cash_transaction` varchar(250) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `amount_cash_transaction` varchar(250) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `total_receivable_transaction` varchar(250) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `amount_receivable_transaction` varchar(250) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `total_cashless_transaction` varchar(250) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `amount_cashless_transaction` varchar(250) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `total_transaction` varchar(250) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `total_amount` varchar(250) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `status_upload` int DEFAULT '0',
+  `from_store` int NOT NULL DEFAULT '1',
+  `data_state` int DEFAULT '0',
+  `created_id` int DEFAULT NULL,
+  `updated_id` int DEFAULT NULL,
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL,
   PRIMARY KEY (`cashier_log_id`),
@@ -1388,13 +1407,13 @@ CREATE TABLE `close_cashier_log` (
 DROP TABLE IF EXISTS `core_bank`;
 
 CREATE TABLE `core_bank` (
-  `bank_id` int(10) NOT NULL AUTO_INCREMENT,
-  `company_id` int(10) DEFAULT NULL,
-  `account_id` int(10) DEFAULT NULL,
-  `bank_name` varchar(250) DEFAULT NULL,
-  `data_state` int(1) DEFAULT 0,
-  `created_id` int(10) DEFAULT NULL,
-  `updated_id` int(10) DEFAULT NULL,
+  `bank_id` int NOT NULL AUTO_INCREMENT,
+  `company_id` int DEFAULT NULL,
+  `account_id` int DEFAULT NULL,
+  `bank_name` varchar(250) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `data_state` int DEFAULT '0',
+  `created_id` int DEFAULT NULL,
+  `updated_id` int DEFAULT NULL,
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL,
   PRIMARY KEY (`bank_id`),
@@ -1414,18 +1433,18 @@ insert  into `core_bank`(`bank_id`,`company_id`,`account_id`,`bank_name`,`data_s
 DROP TABLE IF EXISTS `core_member`;
 
 CREATE TABLE `core_member` (
-  `member_id` int(10) NOT NULL AUTO_INCREMENT,
-  `company_id` int(10) DEFAULT 1,
-  `member_no` varchar(50) DEFAULT NULL,
-  `member_name` varchar(250) DEFAULT NULL,
-  `division_name` varchar(250) DEFAULT NULL,
-  `member_mandatory_savings` varchar(250) DEFAULT NULL,
-  `member_account_receivable_amount` varchar(250) DEFAULT NULL,
-  `member_account_receivable_amount_temp` varchar(250) DEFAULT NULL,
-  `member_account_receivable_status` varchar(250) DEFAULT NULL,
-  `status` varchar(255) DEFAULT '1',
-  `data_state` int(1) DEFAULT 0,
-  `last_update` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `member_id` int NOT NULL AUTO_INCREMENT,
+  `company_id` int DEFAULT '1',
+  `member_no` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `member_name` varchar(250) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `division_name` varchar(250) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `member_mandatory_savings` varchar(250) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `member_account_receivable_amount` varchar(250) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `member_account_receivable_amount_temp` varchar(250) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `member_account_receivable_status` varchar(250) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `status` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT '1',
+  `data_state` int DEFAULT '0',
+  `last_update` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `updated_at` datetime DEFAULT NULL,
   `created_at` datetime DEFAULT NULL,
   PRIMARY KEY (`member_id`),
@@ -1437,8 +1456,8 @@ CREATE TABLE `core_member` (
 
 insert  into `core_member`(`member_id`,`company_id`,`member_no`,`member_name`,`division_name`,`member_mandatory_savings`,`member_account_receivable_amount`,`member_account_receivable_amount_temp`,`member_account_receivable_status`,`status`,`data_state`,`last_update`,`updated_at`,`created_at`) values 
 (1,1,'1','PT Phapros, Tbk','PABRIK','10000','0','17476','0','1',0,'2024-01-13 11:52:37','2024-01-13 11:52:37','2023-09-01 10:13:49'),
-(8924,1,'00001','Diah Istantri','PENSIUNAN','10000','0','218670','0','1',0,'2023-11-21 11:04:36','2023-11-21 11:04:36','2023-09-01 10:13:49'),
-(8925,1,'00003','Mintarti Pancaning R','PABRIK','10000','0','18870','0','1',0,'2023-11-21 10:44:15','2023-11-21 10:44:15','2023-09-01 10:13:49'),
+(8924,1,'00001','Diah Istantri','PENSIUNAN','10000','0','238650','0','1',0,'2024-05-30 17:20:55','2024-05-30 17:20:55','2023-09-01 10:13:49'),
+(8925,1,'00003','Mintarti Pancaning R','PABRIK','10000','0','82695','0','1',0,'2024-05-31 10:52:59','2024-05-31 10:52:59','2023-09-01 10:13:49'),
 (8926,1,'00004','Ahmad Arifin','PABRIK','10000','0','0','0','1',0,'2023-10-11 13:33:51','2023-10-11 10:34:43','2023-06-17 11:48:36'),
 (8927,1,'00006','Sudarti K.','PENSIUNAN','10000','0','0','0','1',0,'2023-08-25 16:19:01','2023-08-25 16:19:01','2023-06-17 11:48:36'),
 (8928,1,'00018','Sugiarti A','PENSIUNAN','10000','0','0','0','1',0,'2023-08-25 10:24:25','2023-06-17 11:48:36','2023-06-17 11:48:36'),
@@ -3033,13 +3052,13 @@ insert  into `core_member`(`member_id`,`company_id`,`member_no`,`member_name`,`d
 DROP TABLE IF EXISTS `core_section`;
 
 CREATE TABLE `core_section` (
-  `section_id` int(10) NOT NULL AUTO_INCREMENT,
-  `section_name` varchar(225) DEFAULT NULL,
-  `section_token` varchar(225) DEFAULT NULL,
-  `data_state` int(1) DEFAULT 0,
-  `company_id` int(10) DEFAULT NULL,
-  `created_id` int(10) DEFAULT NULL,
-  `updated_id` int(10) DEFAULT NULL,
+  `section_id` int NOT NULL AUTO_INCREMENT,
+  `section_name` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `section_token` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `data_state` int DEFAULT '0',
+  `company_id` int DEFAULT NULL,
+  `created_id` int DEFAULT NULL,
+  `updated_id` int DEFAULT NULL,
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL,
   PRIMARY KEY (`section_id`)
@@ -3055,16 +3074,16 @@ insert  into `core_section`(`section_id`,`section_name`,`section_token`,`data_st
 DROP TABLE IF EXISTS `core_supplier`;
 
 CREATE TABLE `core_supplier` (
-  `supplier_id` int(10) NOT NULL AUTO_INCREMENT,
-  `company_id` int(10) DEFAULT NULL,
-  `supplier_name` varchar(250) DEFAULT NULL,
-  `supplier_phone` varchar(250) DEFAULT NULL,
-  `supplier_address` varchar(250) DEFAULT NULL,
-  `data_state` int(1) DEFAULT 0,
-  `created_id` int(10) DEFAULT NULL,
-  `updated_id` int(10) DEFAULT NULL,
-  `created_at` datetime DEFAULT current_timestamp(),
-  `updated_at` datetime DEFAULT current_timestamp(),
+  `supplier_id` int NOT NULL AUTO_INCREMENT,
+  `company_id` int DEFAULT NULL,
+  `supplier_name` varchar(250) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `supplier_phone` varchar(250) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `supplier_address` varchar(250) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `data_state` int DEFAULT '0',
+  `created_id` int DEFAULT NULL,
+  `updated_id` int DEFAULT NULL,
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`supplier_id`),
   KEY `fk_company_id_core_supplier` (`company_id`),
   CONSTRAINT `fk_company_id_core_supplier` FOREIGN KEY (`company_id`) REFERENCES `preference_company` (`company_id`)
@@ -3215,15 +3234,15 @@ insert  into `core_supplier`(`supplier_id`,`company_id`,`supplier_name`,`supplie
 DROP TABLE IF EXISTS `expenditure`;
 
 CREATE TABLE `expenditure` (
-  `expenditure_id` int(10) NOT NULL AUTO_INCREMENT,
-  `company_id` int(10) DEFAULT NULL,
+  `expenditure_id` int NOT NULL AUTO_INCREMENT,
+  `company_id` int DEFAULT NULL,
   `expenditure_date` date DEFAULT NULL,
-  `expenditure_remark` text DEFAULT NULL,
-  `expenditure_amount` int(10) DEFAULT NULL,
-  `data_state` int(1) DEFAULT 0,
-  `created_id` int(10) DEFAULT NULL,
+  `expenditure_remark` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
+  `expenditure_amount` int DEFAULT NULL,
+  `data_state` int DEFAULT '0',
+  `created_id` int DEFAULT NULL,
   `created_at` datetime DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`expenditure_id`),
   KEY `fk_company_id_expenditure` (`company_id`),
   CONSTRAINT `fk_company_id_expenditure` FOREIGN KEY (`company_id`) REFERENCES `preference_company` (`company_id`)
@@ -3236,13 +3255,13 @@ CREATE TABLE `expenditure` (
 DROP TABLE IF EXISTS `failed_jobs`;
 
 CREATE TABLE `failed_jobs` (
-  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-  `uuid` varchar(255) NOT NULL,
-  `connection` text NOT NULL,
-  `queue` text NOT NULL,
-  `payload` longtext NOT NULL,
-  `exception` longtext NOT NULL,
-  `failed_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `uuid` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `connection` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `queue` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `payload` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `exception` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `failed_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY `failed_jobs_uuid_unique` (`uuid`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -3254,26 +3273,26 @@ CREATE TABLE `failed_jobs` (
 DROP TABLE IF EXISTS `invt_item`;
 
 CREATE TABLE `invt_item` (
-  `item_id` int(10) NOT NULL AUTO_INCREMENT,
-  `company_id` int(10) DEFAULT NULL,
-  `category` varchar(255) DEFAULT NULL,
-  `item_category_id` int(10) DEFAULT NULL,
-  `item_unit_id` int(10) DEFAULT NULL,
-  `item_name` varchar(255) DEFAULT NULL,
-  `item_code` varchar(50) DEFAULT NULL,
-  `item_barcode` varchar(50) DEFAULT '',
-  `item_status` int(1) DEFAULT 0,
-  `item_default_quantity` varchar(100) DEFAULT NULL,
-  `item_unit_price` int(11) NOT NULL DEFAULT 0,
-  `item_unit_cost` int(11) NOT NULL DEFAULT 0,
-  `item_remark` varchar(255) DEFAULT '0',
-  `last_balance_item` varchar(255) NOT NULL DEFAULT '0',
-  `bkp` varchar(255) DEFAULT '0',
-  `data_state` int(1) DEFAULT 0,
+  `item_id` int NOT NULL AUTO_INCREMENT,
+  `company_id` int DEFAULT NULL,
+  `category` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `item_category_id` int DEFAULT NULL,
+  `item_unit_id` int DEFAULT NULL,
+  `item_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `item_code` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `item_barcode` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT '',
+  `item_status` int DEFAULT '0',
+  `item_default_quantity` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `item_unit_price` int NOT NULL DEFAULT '0',
+  `item_unit_cost` int NOT NULL DEFAULT '0',
+  `item_remark` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT '0',
+  `last_balance_item` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '0',
+  `bkp` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT '0',
+  `data_state` int DEFAULT '0',
   `updated_at` datetime DEFAULT NULL,
   `created_at` datetime DEFAULT NULL,
-  `updated_id` int(10) DEFAULT NULL,
-  `created_id` int(10) DEFAULT NULL,
+  `updated_id` int DEFAULT NULL,
+  `created_id` int DEFAULT NULL,
   PRIMARY KEY (`item_id`),
   KEY `FK_category_id` (`item_category_id`),
   KEY `FK_item_unit_id` (`item_unit_id`),
@@ -5796,15 +5815,15 @@ insert  into `invt_item`(`item_id`,`company_id`,`category`,`item_category_id`,`i
 DROP TABLE IF EXISTS `invt_item_barcode`;
 
 CREATE TABLE `invt_item_barcode` (
-  `item_barcode_id` int(10) NOT NULL AUTO_INCREMENT,
-  `company_id` int(10) DEFAULT NULL,
-  `item_id` int(10) DEFAULT NULL,
-  `item_unit_id` int(10) DEFAULT NULL,
-  `item_packge_id` int(10) DEFAULT NULL,
-  `item_barcode` varchar(250) DEFAULT NULL,
-  `created_id` int(10) DEFAULT NULL,
-  `updated_id` int(10) DEFAULT NULL,
-  `data_state` int(1) DEFAULT 0,
+  `item_barcode_id` int NOT NULL AUTO_INCREMENT,
+  `company_id` int DEFAULT NULL,
+  `item_id` int DEFAULT NULL,
+  `item_unit_id` int DEFAULT NULL,
+  `item_packge_id` int DEFAULT NULL,
+  `item_barcode` varchar(250) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `created_id` int DEFAULT NULL,
+  `updated_id` int DEFAULT NULL,
+  `data_state` int DEFAULT '0',
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL,
   PRIMARY KEY (`item_barcode_id`),
@@ -8330,17 +8349,17 @@ insert  into `invt_item_barcode`(`item_barcode_id`,`company_id`,`item_id`,`item_
 DROP TABLE IF EXISTS `invt_item_category`;
 
 CREATE TABLE `invt_item_category` (
-  `item_category_id` int(10) NOT NULL AUTO_INCREMENT,
-  `company_id` int(10) DEFAULT NULL,
-  `item_category_code` varchar(50) DEFAULT NULL,
-  `item_category_name` varchar(225) DEFAULT NULL,
-  `item_category_remark` varchar(225) DEFAULT '',
-  `margin_percentage` varchar(225) DEFAULT '0',
-  `data_state` int(1) DEFAULT 0,
+  `item_category_id` int NOT NULL AUTO_INCREMENT,
+  `company_id` int DEFAULT NULL,
+  `item_category_code` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `item_category_name` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `item_category_remark` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT '',
+  `margin_percentage` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT '0',
+  `data_state` int DEFAULT '0',
   `updated_at` datetime DEFAULT NULL,
   `created_at` datetime DEFAULT NULL,
-  `updated_id` int(10) DEFAULT NULL,
-  `created_id` int(10) DEFAULT NULL,
+  `updated_id` int DEFAULT NULL,
+  `created_id` int DEFAULT NULL,
   PRIMARY KEY (`item_category_id`),
   KEY `fk_company_id_item_category` (`company_id`),
   CONSTRAINT `fk_company_id_item_category` FOREIGN KEY (`company_id`) REFERENCES `preference_company` (`company_id`)
@@ -8381,33 +8400,33 @@ insert  into `invt_item_category`(`item_category_id`,`company_id`,`item_category
 DROP TABLE IF EXISTS `invt_item_copy`;
 
 CREATE TABLE `invt_item_copy` (
-  `item_id` int(10) NOT NULL AUTO_INCREMENT,
-  `company_id` int(10) DEFAULT NULL,
-  `category` varchar(255) DEFAULT NULL,
-  `item_category_id` int(10) DEFAULT NULL,
-  `item_unit_id` int(10) DEFAULT NULL,
-  `item_name` varchar(255) DEFAULT NULL,
-  `item_code` varchar(50) DEFAULT NULL,
-  `item_barcode` varchar(50) DEFAULT '',
-  `item_status` int(1) DEFAULT 0,
-  `item_default_quantity` varchar(100) DEFAULT NULL,
-  `item_unit_price` varchar(100) DEFAULT NULL,
-  `item_unit_cost` varchar(100) DEFAULT NULL,
-  `item_remark` varchar(255) DEFAULT '',
-  `last_balance_item` varchar(255) NOT NULL DEFAULT '0',
-  `bkp` varchar(255) DEFAULT '0',
-  `data_state` int(1) DEFAULT 0,
+  `item_id` int NOT NULL AUTO_INCREMENT,
+  `company_id` int DEFAULT NULL,
+  `category` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `item_category_id` int DEFAULT NULL,
+  `item_unit_id` int DEFAULT NULL,
+  `item_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `item_code` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `item_barcode` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT '',
+  `item_status` int DEFAULT '0',
+  `item_default_quantity` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `item_unit_price` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `item_unit_cost` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `item_remark` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT '',
+  `last_balance_item` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '0',
+  `bkp` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT '0',
+  `data_state` int DEFAULT '0',
   `updated_at` datetime DEFAULT NULL,
   `created_at` datetime DEFAULT NULL,
-  `updated_id` int(10) DEFAULT NULL,
-  `created_id` int(10) DEFAULT NULL,
+  `updated_id` int DEFAULT NULL,
+  `created_id` int DEFAULT NULL,
   PRIMARY KEY (`item_id`),
   KEY `FK_category_id` (`item_category_id`),
   KEY `FK_item_unit_id` (`item_unit_id`),
   KEY `fk_company_id_item` (`company_id`),
   CONSTRAINT `FK_category_id` FOREIGN KEY (`item_category_id`) REFERENCES `invt_item_category` (`item_category_id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT `FK_item_unit_id` FOREIGN KEY (`item_unit_id`) REFERENCES `invt_item_unit` (`item_unit_id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT `fk_company_id_item` FOREIGN KEY (`company_id`) REFERENCES `preference_company` (`company_id`)
+  CONSTRAINT `fk_company_id_item` FOREIGN KEY (`company_id`) REFERENCES `preference_company` (`company_id`),
+  CONSTRAINT `FK_item_unit_id` FOREIGN KEY (`item_unit_id`) REFERENCES `invt_item_unit` (`item_unit_id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=2064 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 /*Data for the table `invt_item_copy` */
@@ -10482,25 +10501,25 @@ insert  into `invt_item_copy`(`item_id`,`company_id`,`category`,`item_category_i
 DROP TABLE IF EXISTS `invt_item_mutation`;
 
 CREATE TABLE `invt_item_mutation` (
-  `item_mutation_id` int(10) NOT NULL AUTO_INCREMENT,
-  `company_id` int(10) DEFAULT NULL,
-  `item_id` int(10) DEFAULT NULL,
-  `item_category_id` int(10) DEFAULT NULL,
-  `item_unit_id` int(10) DEFAULT NULL,
-  `transaction_no` varchar(225) DEFAULT NULL,
-  `transaction_date` varchar(225) DEFAULT NULL,
-  `transaction_remark` varchar(225) DEFAULT NULL,
-  `opening_balence` varchar(225) DEFAULT NULL,
-  `stock_in` varchar(225) DEFAULT NULL,
-  `stock_out` varchar(225) DEFAULT NULL,
-  `last_balence` varchar(225) DEFAULT NULL,
-  `data_state` int(1) DEFAULT 0,
-  `created_id` int(10) DEFAULT NULL,
-  `updated_id` int(10) DEFAULT NULL,
+  `item_mutation_id` int NOT NULL AUTO_INCREMENT,
+  `company_id` int DEFAULT NULL,
+  `item_id` int DEFAULT NULL,
+  `item_category_id` int DEFAULT NULL,
+  `item_unit_id` int DEFAULT NULL,
+  `transaction_no` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `transaction_date` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `transaction_remark` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `opening_balence` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `stock_in` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `stock_out` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `last_balence` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `data_state` int DEFAULT '0',
+  `created_id` int DEFAULT NULL,
+  `updated_id` int DEFAULT NULL,
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL,
   PRIMARY KEY (`item_mutation_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=2209 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=2220 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 /*Data for the table `invt_item_mutation` */
 
@@ -12658,26 +12677,37 @@ insert  into `invt_item_mutation`(`item_mutation_id`,`company_id`,`item_id`,`ite
 (2205,1,1,12,15,NULL,NULL,'Penjualan','48','0','1','47',0,55,55,'2023-12-19 10:46:07','2023-12-19 10:46:07'),
 (2206,1,1,12,15,NULL,NULL,'Penjualan','47','0','15','32',0,55,55,'2023-12-19 10:52:06','2023-12-19 10:52:06'),
 (2207,1,3,14,15,NULL,NULL,'Penjualan','-13','0','1','-14',0,55,55,'2024-01-13 11:52:08','2024-01-13 11:52:08'),
-(2208,1,4,14,15,NULL,NULL,'Penjualan','-23','0','1','-24',0,55,55,'2024-01-13 11:52:08','2024-01-13 11:52:08');
+(2208,1,4,14,15,NULL,NULL,'Penjualan','-23','0','1','-24',0,55,55,'2024-01-13 11:52:08','2024-01-13 11:52:08'),
+(2209,1,1,14,15,NULL,NULL,'Penjualan','1','0','1','0',0,55,55,'2024-02-01 10:39:47','2024-02-01 10:39:47'),
+(2210,1,2,12,15,NULL,NULL,'Penjualan','36','0','1','35',0,55,55,'2024-02-01 10:57:17','2024-02-01 10:57:17'),
+(2211,1,1,14,15,NULL,NULL,'Penjualan','0','0','1','-1',0,55,55,'2024-02-01 10:39:47','2024-02-01 10:39:47'),
+(2212,1,2,12,15,NULL,NULL,'Penjualan','35','0','1','34',0,55,55,'2024-02-01 10:57:17','2024-02-01 10:57:17'),
+(2213,1,211,23,15,NULL,NULL,'Penjualan','0','0','1','-1',0,55,55,'2024-05-31 10:52:19','2024-05-31 10:52:19'),
+(2214,1,1,14,15,NULL,NULL,'Penjualan','-1','0','1','-2',0,55,55,'2024-06-27 16:51:57','2024-06-27 16:51:57'),
+(2215,1,2,12,15,NULL,NULL,'Penjualan','34','0','1','33',0,55,55,'2024-06-27 16:51:57','2024-06-27 16:51:57'),
+(2216,1,1,14,15,NULL,NULL,'Penjualan','-2','0','1','-3',0,55,55,'2024-06-27 16:51:57','2024-06-27 16:51:57'),
+(2217,1,2,12,15,NULL,NULL,'Penjualan','33','0','1','32',0,55,55,'2024-06-27 16:51:57','2024-06-27 16:51:57'),
+(2218,1,2,12,15,'KR2024060001','2024-06-27','Penjualan','32','0','1','31',0,55,55,'2024-06-27 17:17:53','2024-06-27 17:17:54'),
+(2219,1,1,14,15,'KR2024060001','2024-06-27','Penjualan','-3','0','1','-4',0,55,55,'2024-06-27 17:17:54','2024-06-27 17:17:54');
 
 /*Table structure for table `invt_item_packge` */
 
 DROP TABLE IF EXISTS `invt_item_packge`;
 
 CREATE TABLE `invt_item_packge` (
-  `item_packge_id` int(10) NOT NULL AUTO_INCREMENT,
-  `company_id` int(10) DEFAULT NULL,
-  `item_id` int(10) DEFAULT NULL,
-  `item_unit_id` int(10) DEFAULT NULL,
-  `item_category_id` int(10) DEFAULT NULL,
-  `item_default_quantity` varchar(250) DEFAULT NULL,
-  `margin_percentage` varchar(250) DEFAULT '0',
-  `item_unit_price` varchar(250) DEFAULT NULL,
-  `item_unit_cost` varchar(250) DEFAULT NULL,
-  `order` int(10) DEFAULT NULL,
-  `data_state` int(1) DEFAULT 0,
-  `created_id` int(10) DEFAULT NULL,
-  `updated_id` int(10) DEFAULT NULL,
+  `item_packge_id` int NOT NULL AUTO_INCREMENT,
+  `company_id` int DEFAULT NULL,
+  `item_id` int DEFAULT NULL,
+  `item_unit_id` int DEFAULT NULL,
+  `item_category_id` int DEFAULT NULL,
+  `item_default_quantity` varchar(250) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `margin_percentage` varchar(250) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT '0',
+  `item_unit_price` varchar(250) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `item_unit_cost` varchar(250) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `order` int DEFAULT NULL,
+  `data_state` int DEFAULT '0',
+  `created_id` int DEFAULT NULL,
+  `updated_id` int DEFAULT NULL,
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL,
   PRIMARY KEY (`item_packge_id`),
@@ -12900,8 +12930,8 @@ insert  into `invt_item_packge`(`item_packge_id`,`company_id`,`item_id`,`item_un
 (208,1,208,15,25,'1','0','6000','4152',0,0,55,55,'0000-00-00 00:00:00','0000-00-00 00:00:00'),
 (209,1,209,15,25,'1','0','7000','5856',0,0,55,55,'0000-00-00 00:00:00','0000-00-00 00:00:00'),
 (210,1,210,15,14,'1','0','2000','1441',0,0,55,55,'0000-00-00 00:00:00','0000-00-00 00:00:00'),
-(211,1,211,15,23,'1','0','57500','55500',0,0,55,55,'0000-00-00 00:00:00','0000-00-00 00:00:00'),
-(212,1,212,15,23,'1','0','36500','31500',0,0,55,55,'0000-00-00 00:00:00','0000-00-00 00:00:00'),
+(211,1,211,15,23,'1','10','66000','60000',0,0,55,55,'0000-00-00 00:00:00','2024-05-31 14:49:15'),
+(212,1,212,15,23,'1','10.94','35500','32000',0,0,55,55,'0000-00-00 00:00:00','2024-05-31 11:04:48'),
 (213,1,213,15,23,'1','0','65000','61000',0,0,55,55,'0000-00-00 00:00:00','0000-00-00 00:00:00'),
 (214,1,214,15,23,'1','0','69000','65000',0,0,55,55,'0000-00-00 00:00:00','0000-00-00 00:00:00'),
 (215,1,215,15,23,'1','0','30000','28000',0,0,55,55,'0000-00-00 00:00:00','0000-00-00 00:00:00'),
@@ -15203,15 +15233,15 @@ insert  into `invt_item_packge`(`item_packge_id`,`company_id`,`item_id`,`item_un
 DROP TABLE IF EXISTS `invt_item_rack`;
 
 CREATE TABLE `invt_item_rack` (
-  `item_rack_id` int(10) NOT NULL AUTO_INCREMENT,
-  `company_id` int(10) DEFAULT NULL,
-  `rack_name` varchar(250) DEFAULT NULL,
-  `rack_status` int(1) DEFAULT NULL,
-  `data_state` int(1) DEFAULT 0,
+  `item_rack_id` int NOT NULL AUTO_INCREMENT,
+  `company_id` int DEFAULT NULL,
+  `rack_name` varchar(250) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `rack_status` int DEFAULT NULL,
+  `data_state` int DEFAULT '0',
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL,
-  `created_id` int(10) DEFAULT NULL,
-  `updated_id` int(10) DEFAULT NULL,
+  `created_id` int DEFAULT NULL,
+  `updated_id` int DEFAULT NULL,
   PRIMARY KEY (`item_rack_id`),
   KEY `fk_company_id_item_rack` (`company_id`),
   CONSTRAINT `fk_company_id_item_rack` FOREIGN KEY (`company_id`) REFERENCES `preference_company` (`company_id`)
@@ -15241,21 +15271,21 @@ insert  into `invt_item_rack`(`item_rack_id`,`company_id`,`rack_name`,`rack_stat
 DROP TABLE IF EXISTS `invt_item_stock`;
 
 CREATE TABLE `invt_item_stock` (
-  `item_stock_id` int(10) NOT NULL AUTO_INCREMENT,
-  `company_id` int(10) DEFAULT NULL,
-  `warehouse_id` int(10) DEFAULT NULL,
-  `item_id` int(10) DEFAULT NULL,
-  `item_unit_id` int(10) DEFAULT NULL,
-  `item_category_id` int(10) DEFAULT NULL,
-  `rack_line` int(10) DEFAULT NULL,
-  `rack_column` int(10) DEFAULT NULL,
-  `last_balance` varchar(225) DEFAULT NULL,
-  `last_update` datetime DEFAULT NULL ON UPDATE current_timestamp(),
-  `data_state` int(1) DEFAULT 0,
+  `item_stock_id` int NOT NULL AUTO_INCREMENT,
+  `company_id` int DEFAULT NULL,
+  `warehouse_id` int DEFAULT NULL,
+  `item_id` int DEFAULT NULL,
+  `item_unit_id` int DEFAULT NULL,
+  `item_category_id` int DEFAULT NULL,
+  `rack_line` int DEFAULT NULL,
+  `rack_column` int DEFAULT NULL,
+  `last_balance` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `last_update` datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+  `data_state` int DEFAULT '0',
   `updated_at` datetime DEFAULT NULL,
-  `updated_id` int(10) DEFAULT NULL,
+  `updated_id` int DEFAULT NULL,
   `created_at` datetime DEFAULT NULL,
-  `created_id` int(10) DEFAULT NULL,
+  `created_id` int DEFAULT NULL,
   PRIMARY KEY (`item_stock_id`),
   KEY `FK_item_id_stock` (`item_id`),
   KEY `FK_item_category_stock` (`item_category_id`),
@@ -15267,8 +15297,8 @@ CREATE TABLE `invt_item_stock` (
 /*Data for the table `invt_item_stock` */
 
 insert  into `invt_item_stock`(`item_stock_id`,`company_id`,`warehouse_id`,`item_id`,`item_unit_id`,`item_category_id`,`rack_line`,`rack_column`,`last_balance`,`last_update`,`data_state`,`updated_at`,`updated_id`,`created_at`,`created_id`) values 
-(1,1,1,1,15,14,0,0,'1','0000-00-00 00:00:00',0,'0000-00-00 00:00:00',55,'0000-00-00 00:00:00',55),
-(2,1,1,2,15,12,0,0,'36','0000-00-00 00:00:00',0,'0000-00-00 00:00:00',55,'0000-00-00 00:00:00',55),
+(1,1,1,1,15,14,0,0,'-4','2024-06-27 17:18:06',0,'2024-06-27 17:18:06',55,'0000-00-00 00:00:00',55),
+(2,1,1,2,15,12,0,0,'31','2024-06-27 17:18:06',0,'2024-06-27 17:18:06',55,'0000-00-00 00:00:00',55),
 (3,1,1,3,15,14,0,0,'16','2024-01-17 09:54:20',0,'2024-01-13 11:52:37',55,'0000-00-00 00:00:00',55),
 (4,1,1,4,15,14,0,0,'13','2024-01-17 09:54:21',0,'2024-01-13 11:52:37',55,'0000-00-00 00:00:00',55),
 (5,1,1,5,15,14,0,0,'61','0000-00-00 00:00:00',0,'0000-00-00 00:00:00',55,'0000-00-00 00:00:00',55),
@@ -15477,7 +15507,7 @@ insert  into `invt_item_stock`(`item_stock_id`,`company_id`,`warehouse_id`,`item
 (208,1,1,208,15,25,0,0,'48','0000-00-00 00:00:00',0,'0000-00-00 00:00:00',55,'0000-00-00 00:00:00',55),
 (209,1,1,209,15,25,0,0,'5','0000-00-00 00:00:00',0,'0000-00-00 00:00:00',55,'0000-00-00 00:00:00',55),
 (210,1,1,210,15,14,0,0,'0','0000-00-00 00:00:00',0,'0000-00-00 00:00:00',55,'0000-00-00 00:00:00',55),
-(211,1,1,211,15,23,0,0,'0','0000-00-00 00:00:00',0,'0000-00-00 00:00:00',55,'0000-00-00 00:00:00',55),
+(211,1,1,211,15,23,0,0,'-1','2024-05-31 10:52:59',0,'2024-05-31 10:52:59',55,'0000-00-00 00:00:00',55),
 (212,1,1,212,15,23,0,0,'0','0000-00-00 00:00:00',0,'0000-00-00 00:00:00',55,'0000-00-00 00:00:00',55),
 (213,1,1,213,15,23,0,0,'0','0000-00-00 00:00:00',0,'0000-00-00 00:00:00',55,'0000-00-00 00:00:00',55),
 (214,1,1,214,15,23,0,0,'8','0000-00-00 00:00:00',0,'0000-00-00 00:00:00',55,'0000-00-00 00:00:00',55),
@@ -17780,16 +17810,16 @@ insert  into `invt_item_stock`(`item_stock_id`,`company_id`,`warehouse_id`,`item
 DROP TABLE IF EXISTS `invt_item_unit`;
 
 CREATE TABLE `invt_item_unit` (
-  `item_unit_id` int(10) NOT NULL AUTO_INCREMENT,
-  `company_id` int(10) DEFAULT NULL,
-  `item_unit_code` varchar(50) DEFAULT NULL,
-  `item_unit_name` varchar(255) DEFAULT NULL,
-  `item_unit_remark` varchar(255) DEFAULT '',
-  `data_state` int(1) DEFAULT 0,
+  `item_unit_id` int NOT NULL AUTO_INCREMENT,
+  `company_id` int DEFAULT NULL,
+  `item_unit_code` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `item_unit_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `item_unit_remark` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT '',
+  `data_state` int DEFAULT '0',
   `updated_at` datetime DEFAULT NULL,
   `created_at` datetime DEFAULT NULL,
-  `updated_id` int(10) DEFAULT NULL,
-  `created_id` int(10) DEFAULT NULL,
+  `updated_id` int DEFAULT NULL,
+  `created_id` int DEFAULT NULL,
   PRIMARY KEY (`item_unit_id`),
   KEY `fk_company_id_item_unit` (`company_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=16 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -17818,21 +17848,21 @@ insert  into `invt_item_unit`(`item_unit_id`,`company_id`,`item_unit_code`,`item
 DROP TABLE IF EXISTS `invt_stock_adjustment`;
 
 CREATE TABLE `invt_stock_adjustment` (
-  `stock_adjustment_id` int(10) NOT NULL AUTO_INCREMENT,
-  `company_id` int(10) DEFAULT NULL,
-  `warehouse_id` int(10) DEFAULT NULL,
-  `adjustment_no` varchar(225) DEFAULT NULL,
-  `stock_adjustment_date` varchar(225) DEFAULT NULL,
-  `data_state` int(1) DEFAULT 0,
-  `created_id` int(10) DEFAULT NULL,
-  `updated_id` int(10) DEFAULT NULL,
+  `stock_adjustment_id` int NOT NULL AUTO_INCREMENT,
+  `company_id` int DEFAULT NULL,
+  `warehouse_id` int DEFAULT NULL,
+  `adjustment_no` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `stock_adjustment_date` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `data_state` int DEFAULT '0',
+  `created_id` int DEFAULT NULL,
+  `updated_id` int DEFAULT NULL,
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL,
   PRIMARY KEY (`stock_adjustment_id`),
   KEY `FK_warehouse_adjustment` (`warehouse_id`),
   KEY `fk_company_id_stock_adjustment` (`company_id`),
-  CONSTRAINT `FK_warehouse_adjustment` FOREIGN KEY (`warehouse_id`) REFERENCES `invt_warehouse` (`warehouse_id`),
-  CONSTRAINT `fk_company_id_stock_adjustment` FOREIGN KEY (`company_id`) REFERENCES `preference_company` (`company_id`)
+  CONSTRAINT `fk_company_id_stock_adjustment` FOREIGN KEY (`company_id`) REFERENCES `preference_company` (`company_id`),
+  CONSTRAINT `FK_warehouse_adjustment` FOREIGN KEY (`warehouse_id`) REFERENCES `invt_warehouse` (`warehouse_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 /*Data for the table `invt_stock_adjustment` */
@@ -17842,19 +17872,19 @@ CREATE TABLE `invt_stock_adjustment` (
 DROP TABLE IF EXISTS `invt_stock_adjustment_item`;
 
 CREATE TABLE `invt_stock_adjustment_item` (
-  `stock_adjustment_item_id` int(10) NOT NULL AUTO_INCREMENT,
-  `company_id` int(10) DEFAULT NULL,
-  `stock_adjustment_id` int(10) DEFAULT NULL,
-  `item_id` int(10) DEFAULT NULL,
-  `item_category_id` int(10) DEFAULT NULL,
-  `item_unit_id` int(10) DEFAULT NULL,
-  `last_balance_data` varchar(225) DEFAULT NULL,
-  `last_balance_physical` varchar(225) DEFAULT NULL,
-  `last_balance_adjustment` varchar(225) DEFAULT NULL,
-  `stock_adjustment_item_remark` varchar(225) DEFAULT NULL,
-  `data_state` int(1) DEFAULT 0,
-  `created_id` int(10) DEFAULT NULL,
-  `updated_id` int(10) DEFAULT NULL,
+  `stock_adjustment_item_id` int NOT NULL AUTO_INCREMENT,
+  `company_id` int DEFAULT NULL,
+  `stock_adjustment_id` int DEFAULT NULL,
+  `item_id` int DEFAULT NULL,
+  `item_category_id` int DEFAULT NULL,
+  `item_unit_id` int DEFAULT NULL,
+  `last_balance_data` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `last_balance_physical` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `last_balance_adjustment` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `stock_adjustment_item_remark` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `data_state` int DEFAULT '0',
+  `created_id` int DEFAULT NULL,
+  `updated_id` int DEFAULT NULL,
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL,
   PRIMARY KEY (`stock_adjustment_item_id`),
@@ -17865,9 +17895,9 @@ CREATE TABLE `invt_stock_adjustment_item` (
   KEY `fk_company_id_stock_adjustment_item` (`company_id`),
   CONSTRAINT `FK_adjustment_id` FOREIGN KEY (`stock_adjustment_id`) REFERENCES `invt_stock_adjustment` (`stock_adjustment_id`),
   CONSTRAINT `FK_category_id_stock_item` FOREIGN KEY (`item_category_id`) REFERENCES `invt_item_category` (`item_category_id`),
+  CONSTRAINT `fk_company_id_stock_adjustment_item` FOREIGN KEY (`company_id`) REFERENCES `preference_company` (`company_id`),
   CONSTRAINT `FK_item_id_stock_item` FOREIGN KEY (`item_id`) REFERENCES `invt_item_copy` (`item_id`),
-  CONSTRAINT `FK_unit_id_stock_item` FOREIGN KEY (`item_unit_id`) REFERENCES `invt_item_unit` (`item_unit_id`),
-  CONSTRAINT `fk_company_id_stock_adjustment_item` FOREIGN KEY (`company_id`) REFERENCES `preference_company` (`company_id`)
+  CONSTRAINT `FK_unit_id_stock_item` FOREIGN KEY (`item_unit_id`) REFERENCES `invt_item_unit` (`item_unit_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 /*Data for the table `invt_stock_adjustment_item` */
@@ -17877,17 +17907,17 @@ CREATE TABLE `invt_stock_adjustment_item` (
 DROP TABLE IF EXISTS `invt_warehouse`;
 
 CREATE TABLE `invt_warehouse` (
-  `warehouse_id` int(10) NOT NULL AUTO_INCREMENT,
-  `company_id` int(10) DEFAULT NULL,
-  `warehouse_code` varchar(50) DEFAULT NULL,
-  `warehouse_name` varchar(255) DEFAULT NULL,
-  `warehouse_address` varchar(255) DEFAULT NULL,
-  `warehouse_phone` varchar(225) DEFAULT NULL,
-  `data_state` int(1) DEFAULT 0,
+  `warehouse_id` int NOT NULL AUTO_INCREMENT,
+  `company_id` int DEFAULT NULL,
+  `warehouse_code` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `warehouse_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `warehouse_address` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `warehouse_phone` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `data_state` int DEFAULT '0',
   `updated_at` datetime DEFAULT NULL,
   `created_at` datetime DEFAULT NULL,
-  `updated_id` int(10) DEFAULT NULL,
-  `created_id` int(10) DEFAULT NULL,
+  `updated_id` int DEFAULT NULL,
+  `created_id` int DEFAULT NULL,
   PRIMARY KEY (`warehouse_id`),
   KEY `fk_company_id_warehouse` (`company_id`),
   CONSTRAINT `fk_company_id_warehouse` FOREIGN KEY (`company_id`) REFERENCES `preference_company` (`company_id`)
@@ -17903,9 +17933,9 @@ insert  into `invt_warehouse`(`warehouse_id`,`company_id`,`warehouse_code`,`ware
 DROP TABLE IF EXISTS `item_stock_update`;
 
 CREATE TABLE `item_stock_update` (
-  `id` int(11) NOT NULL,
-  `barcode` varchar(255) DEFAULT NULL,
-  `last_balance_item` varchar(255) DEFAULT NULL,
+  `id` int NOT NULL,
+  `barcode` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `last_balance_item` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
@@ -17916,9 +17946,9 @@ CREATE TABLE `item_stock_update` (
 DROP TABLE IF EXISTS `migrations`;
 
 CREATE TABLE `migrations` (
-  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-  `migration` varchar(255) NOT NULL,
-  `batch` int(11) NOT NULL,
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `migration` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `batch` int NOT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -17936,8 +17966,8 @@ insert  into `migrations`(`id`,`migration`,`batch`) values
 DROP TABLE IF EXISTS `password_resets`;
 
 CREATE TABLE `password_resets` (
-  `email` varchar(255) NOT NULL,
-  `token` varchar(255) NOT NULL,
+  `email` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `token` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   KEY `password_resets_email_index` (`email`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -17949,12 +17979,12 @@ CREATE TABLE `password_resets` (
 DROP TABLE IF EXISTS `personal_access_tokens`;
 
 CREATE TABLE `personal_access_tokens` (
-  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-  `tokenable_type` varchar(255) NOT NULL,
-  `tokenable_id` bigint(20) unsigned NOT NULL,
-  `name` varchar(255) NOT NULL,
-  `token` varchar(64) NOT NULL,
-  `abilities` text DEFAULT NULL,
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `tokenable_type` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `tokenable_id` bigint unsigned NOT NULL,
+  `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `token` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `abilities` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
   `last_used_at` timestamp NULL DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
@@ -17974,20 +18004,20 @@ insert  into `personal_access_tokens`(`id`,`tokenable_type`,`tokenable_id`,`name
 DROP TABLE IF EXISTS `preference_company`;
 
 CREATE TABLE `preference_company` (
-  `company_id` int(10) NOT NULL AUTO_INCREMENT,
-  `company_name` varchar(225) DEFAULT NULL,
-  `company_address` varchar(225) DEFAULT NULL,
-  `company_phone_number` varchar(225) DEFAULT NULL,
-  `company_mobile_number` varchar(225) DEFAULT NULL,
-  `company_email` varchar(225) DEFAULT NULL,
-  `company_website` varchar(225) DEFAULT NULL,
-  `company_logo` varchar(225) DEFAULT NULL,
-  `account_payable_id` varchar(225) DEFAULT NULL,
-  `account_shortover_id` varchar(225) DEFAULT NULL,
-  `ppn_percentage` varchar(225) DEFAULT NULL,
-  `printer_address` varchar(225) DEFAULT NULL,
-  `receipt_bottom_text` varchar(250) DEFAULT ':::::Terima Kasih:::::',
-  `data_state` int(1) DEFAULT 0,
+  `company_id` int NOT NULL AUTO_INCREMENT,
+  `company_name` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `company_address` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `company_phone_number` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `company_mobile_number` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `company_email` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `company_website` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `company_logo` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `account_payable_id` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `account_shortover_id` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `ppn_percentage` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `printer_address` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `receipt_bottom_text` varchar(250) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT ':::::Terima Kasih:::::',
+  `data_state` int DEFAULT '0',
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL,
   PRIMARY KEY (`company_id`)
@@ -18003,15 +18033,15 @@ insert  into `preference_company`(`company_id`,`company_name`,`company_address`,
 DROP TABLE IF EXISTS `preference_transaction_module`;
 
 CREATE TABLE `preference_transaction_module` (
-  `transaction_module_id` int(10) NOT NULL AUTO_INCREMENT,
-  `transaction_module_name` varchar(225) DEFAULT NULL,
-  `transaction_module_code` varchar(225) DEFAULT NULL,
-  `transaction_controller` varchar(225) DEFAULT NULL,
-  `transaction_table` varchar(225) DEFAULT NULL,
-  `transaction_primary_key` varchar(225) DEFAULT NULL,
-  `status` int(1) DEFAULT NULL,
-  `data_state` int(1) DEFAULT 0,
-  `last_update` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `transaction_module_id` int NOT NULL AUTO_INCREMENT,
+  `transaction_module_name` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `transaction_module_code` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `transaction_controller` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `transaction_table` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `transaction_primary_key` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `status` int DEFAULT NULL,
+  `data_state` int DEFAULT '0',
+  `last_update` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`transaction_module_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
@@ -18035,15 +18065,15 @@ insert  into `preference_transaction_module`(`transaction_module_id`,`transactio
 DROP TABLE IF EXISTS `preference_voucher`;
 
 CREATE TABLE `preference_voucher` (
-  `voucher_id` int(10) NOT NULL AUTO_INCREMENT,
-  `company_id` int(10) DEFAULT NULL,
-  `voucher_code` varchar(225) DEFAULT NULL,
-  `voucher_amount` varchar(225) DEFAULT NULL,
-  `start_voucher` varchar(225) DEFAULT NULL,
-  `end_voucher` varchar(225) DEFAULT NULL,
-  `data_state` int(1) DEFAULT 0,
-  `created_id` int(10) DEFAULT NULL,
-  `updated_id` int(10) DEFAULT NULL,
+  `voucher_id` int NOT NULL AUTO_INCREMENT,
+  `company_id` int DEFAULT NULL,
+  `voucher_code` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `voucher_amount` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `start_voucher` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `end_voucher` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `data_state` int DEFAULT '0',
+  `created_id` int DEFAULT NULL,
+  `updated_id` int DEFAULT NULL,
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL,
   PRIMARY KEY (`voucher_id`),
@@ -18079,39 +18109,39 @@ insert  into `preference_voucher`(`voucher_id`,`company_id`,`voucher_code`,`vouc
 DROP TABLE IF EXISTS `purchase_invoice`;
 
 CREATE TABLE `purchase_invoice` (
-  `purchase_invoice_id` int(10) NOT NULL AUTO_INCREMENT,
-  `company_id` int(10) DEFAULT NULL,
-  `warehouse_id` int(10) DEFAULT NULL,
-  `supplier_id` int(10) DEFAULT NULL,
-  `purchase_payment_method` int(1) DEFAULT NULL,
-  `purchase_invoice_no` varchar(225) DEFAULT NULL,
-  `subtotal_item` varchar(225) DEFAULT NULL,
-  `purchase_invoice_remark` varchar(225) DEFAULT NULL,
-  `purchase_invoice_date` varchar(225) DEFAULT NULL,
-  `purchase_invoice_due_date` varchar(225) DEFAULT NULL,
-  `subtotal_amount_total` varchar(225) DEFAULT NULL,
-  `discount_percentage_total` varchar(225) DEFAULT NULL,
-  `discount_amount_total` varchar(225) DEFAULT NULL,
-  `tax_ppn_percentage` varchar(225) DEFAULT '0',
-  `tax_ppn_amount` varchar(225) DEFAULT '0',
-  `total_amount` varchar(255) DEFAULT NULL,
-  `consignment_status` varchar(255) DEFAULT '0',
-  `paid_amount` varchar(225) DEFAULT NULL,
-  `owing_amount` varchar(225) DEFAULT NULL,
-  `shortover_amount` varchar(225) DEFAULT NULL,
-  `return_amount` varchar(225) DEFAULT NULL,
-  `data_state` int(1) DEFAULT 0,
-  `created_id` int(10) DEFAULT NULL,
-  `updated_id` int(10) DEFAULT NULL,
+  `purchase_invoice_id` int NOT NULL AUTO_INCREMENT,
+  `company_id` int DEFAULT NULL,
+  `warehouse_id` int DEFAULT NULL,
+  `supplier_id` int DEFAULT NULL,
+  `purchase_payment_method` int DEFAULT NULL,
+  `purchase_invoice_no` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `subtotal_item` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `purchase_invoice_remark` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `purchase_invoice_date` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `purchase_invoice_due_date` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `subtotal_amount_total` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `discount_percentage_total` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `discount_amount_total` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `tax_ppn_percentage` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT '0',
+  `tax_ppn_amount` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT '0',
+  `total_amount` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `consignment_status` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT '0',
+  `paid_amount` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `owing_amount` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `shortover_amount` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `return_amount` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `data_state` int DEFAULT '0',
+  `created_id` int DEFAULT NULL,
+  `updated_id` int DEFAULT NULL,
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL,
   PRIMARY KEY (`purchase_invoice_id`),
   KEY `FK_warehouse_id_purchase_invoice` (`warehouse_id`),
   KEY `fk_company_id_purchase_invoice` (`company_id`),
   KEY `fk_supplier_id_purchase_invoice` (`supplier_id`),
-  CONSTRAINT `FK_warehouse_id_purchase_invoice` FOREIGN KEY (`warehouse_id`) REFERENCES `invt_warehouse` (`warehouse_id`),
   CONSTRAINT `fk_company_id_purchase_invoice` FOREIGN KEY (`company_id`) REFERENCES `preference_company` (`company_id`),
-  CONSTRAINT `fk_supplier_id_purchase_invoice` FOREIGN KEY (`supplier_id`) REFERENCES `core_supplier` (`supplier_id`)
+  CONSTRAINT `fk_supplier_id_purchase_invoice` FOREIGN KEY (`supplier_id`) REFERENCES `core_supplier` (`supplier_id`),
+  CONSTRAINT `FK_warehouse_id_purchase_invoice` FOREIGN KEY (`warehouse_id`) REFERENCES `invt_warehouse` (`warehouse_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 /*Data for the table `purchase_invoice` */
@@ -18121,22 +18151,22 @@ CREATE TABLE `purchase_invoice` (
 DROP TABLE IF EXISTS `purchase_invoice_item`;
 
 CREATE TABLE `purchase_invoice_item` (
-  `purchase_invoice_item_id` int(10) NOT NULL AUTO_INCREMENT,
-  `company_id` int(10) DEFAULT NULL,
-  `purchase_invoice_id` int(10) DEFAULT NULL,
-  `item_category_id` int(10) DEFAULT NULL,
-  `item_unit_id` int(10) DEFAULT NULL,
-  `item_id` int(10) DEFAULT NULL,
-  `item_unit_cost` varchar(225) DEFAULT NULL,
-  `quantity` varchar(225) DEFAULT NULL,
-  `subtotal_amount` varchar(225) DEFAULT NULL,
-  `discount_percentage` varchar(225) DEFAULT '0',
-  `discount_amount` varchar(225) DEFAULT '0',
-  `subtotal_amount_after_discount` varchar(225) DEFAULT NULL,
-  `item_expired_date` varchar(225) DEFAULT NULL,
-  `data_state` int(1) DEFAULT 0,
-  `created_id` int(10) DEFAULT NULL,
-  `updated_id` int(10) DEFAULT NULL,
+  `purchase_invoice_item_id` int NOT NULL AUTO_INCREMENT,
+  `company_id` int DEFAULT NULL,
+  `purchase_invoice_id` int DEFAULT NULL,
+  `item_category_id` int DEFAULT NULL,
+  `item_unit_id` int DEFAULT NULL,
+  `item_id` int DEFAULT NULL,
+  `item_unit_cost` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `quantity` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `subtotal_amount` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `discount_percentage` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT '0',
+  `discount_amount` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT '0',
+  `subtotal_amount_after_discount` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `item_expired_date` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `data_state` int DEFAULT '0',
+  `created_id` int DEFAULT NULL,
+  `updated_id` int DEFAULT NULL,
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL,
   PRIMARY KEY (`purchase_invoice_item_id`),
@@ -18154,20 +18184,20 @@ CREATE TABLE `purchase_invoice_item` (
 DROP TABLE IF EXISTS `purchase_payment`;
 
 CREATE TABLE `purchase_payment` (
-  `payment_id` int(10) NOT NULL AUTO_INCREMENT,
-  `company_id` int(10) DEFAULT NULL,
-  `supplier_id` int(10) DEFAULT NULL,
-  `payment_method` int(1) DEFAULT NULL,
-  `payment_date` varchar(250) DEFAULT NULL,
-  `payment_no` varchar(250) DEFAULT NULL,
-  `payment_remark` varchar(250) DEFAULT NULL,
-  `payable_amount` varchar(250) DEFAULT NULL,
-  `payment_amount` varchar(250) DEFAULT NULL,
-  `adm_amount` varchar(255) NOT NULL DEFAULT '0',
-  `rounding_amount` varchar(250) DEFAULT NULL,
-  `data_state` int(10) DEFAULT 0,
-  `created_id` int(10) DEFAULT NULL,
-  `updated_id` int(10) DEFAULT NULL,
+  `payment_id` int NOT NULL AUTO_INCREMENT,
+  `company_id` int DEFAULT NULL,
+  `supplier_id` int DEFAULT NULL,
+  `payment_method` int DEFAULT NULL,
+  `payment_date` varchar(250) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `payment_no` varchar(250) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `payment_remark` varchar(250) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `payable_amount` varchar(250) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `payment_amount` varchar(250) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `adm_amount` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '0',
+  `rounding_amount` varchar(250) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `data_state` int DEFAULT '0',
+  `created_id` int DEFAULT NULL,
+  `updated_id` int DEFAULT NULL,
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL,
   PRIMARY KEY (`payment_id`),
@@ -18184,18 +18214,18 @@ CREATE TABLE `purchase_payment` (
 DROP TABLE IF EXISTS `purchase_payment_item`;
 
 CREATE TABLE `purchase_payment_item` (
-  `payment_item_id` int(10) NOT NULL AUTO_INCREMENT,
-  `company_id` int(10) DEFAULT NULL,
-  `payment_id` int(10) DEFAULT NULL,
-  `purchase_invoice_id` int(10) DEFAULT NULL,
-  `purchase_invoice_no` varchar(225) DEFAULT NULL,
-  `return_amount` varchar(225) DEFAULT NULL,
-  `date_invoice` varchar(225) DEFAULT NULL,
-  `due_date_invoice` varchar(225) DEFAULT NULL,
-  `total_amount` varchar(225) DEFAULT NULL,
-  `data_state` int(1) DEFAULT 0,
-  `created_id` int(10) DEFAULT NULL,
-  `updated_id` int(10) DEFAULT NULL,
+  `payment_item_id` int NOT NULL AUTO_INCREMENT,
+  `company_id` int DEFAULT NULL,
+  `payment_id` int DEFAULT NULL,
+  `purchase_invoice_id` int DEFAULT NULL,
+  `purchase_invoice_no` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `return_amount` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `date_invoice` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `due_date_invoice` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `total_amount` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `data_state` int DEFAULT '0',
+  `created_id` int DEFAULT NULL,
+  `updated_id` int DEFAULT NULL,
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL,
   PRIMARY KEY (`payment_item_id`),
@@ -18210,36 +18240,36 @@ CREATE TABLE `purchase_payment_item` (
 DROP TABLE IF EXISTS `purchase_return`;
 
 CREATE TABLE `purchase_return` (
-  `purchase_return_id` int(10) NOT NULL AUTO_INCREMENT,
-  `company_id` int(10) DEFAULT NULL,
-  `supplier_id` int(10) DEFAULT NULL,
-  `warehouse_id` int(10) DEFAULT NULL,
-  `purchase_invoice_id` int(10) DEFAULT NULL,
-  `purchase_return_no` varchar(225) DEFAULT NULL,
-  `purchase_return_date` varchar(225) DEFAULT NULL,
-  `purchase_return_quantity` varchar(255) DEFAULT NULL,
-  `subtotal_amount_total` varchar(225) DEFAULT NULL,
-  `discount_percentage_total` varchar(225) DEFAULT '0',
-  `discount_amount_total` varchar(225) DEFAULT '0',
-  `tax_ppn_percentage` varchar(225) DEFAULT '0',
-  `tax_ppn_amount` varchar(225) DEFAULT '0',
-  `shortover_amount` varchar(225) DEFAULT '0',
-  `purchase_return_subtotal` varchar(255) DEFAULT NULL,
-  `purchase_return_remark` varchar(255) DEFAULT NULL,
-  `data_state` int(1) DEFAULT 0,
+  `purchase_return_id` int NOT NULL AUTO_INCREMENT,
+  `company_id` int DEFAULT NULL,
+  `supplier_id` int DEFAULT NULL,
+  `warehouse_id` int DEFAULT NULL,
+  `purchase_invoice_id` int DEFAULT NULL,
+  `purchase_return_no` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `purchase_return_date` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `purchase_return_quantity` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `subtotal_amount_total` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `discount_percentage_total` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT '0',
+  `discount_amount_total` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT '0',
+  `tax_ppn_percentage` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT '0',
+  `tax_ppn_amount` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT '0',
+  `shortover_amount` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT '0',
+  `purchase_return_subtotal` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `purchase_return_remark` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `data_state` int DEFAULT '0',
   `updated_at` datetime DEFAULT NULL,
   `created_at` datetime DEFAULT NULL,
-  `updated_id` int(10) DEFAULT NULL,
-  `created_id` int(10) DEFAULT NULL,
+  `updated_id` int DEFAULT NULL,
+  `created_id` int DEFAULT NULL,
   PRIMARY KEY (`purchase_return_id`),
   KEY `Fk_warehouse_id` (`warehouse_id`),
   KEY `fk_company_id_purchase_retrun` (`company_id`),
   KEY `fk_supplier_id_purchase_retrun` (`supplier_id`),
   KEY `fk_purchase_invoice_id_purchase_return` (`purchase_invoice_id`),
-  CONSTRAINT `Fk_warehouse_id` FOREIGN KEY (`warehouse_id`) REFERENCES `invt_warehouse` (`warehouse_id`),
   CONSTRAINT `fk_company_id_purchase_retrun` FOREIGN KEY (`company_id`) REFERENCES `preference_company` (`company_id`),
   CONSTRAINT `fk_purchase_invoice_id_purchase_return` FOREIGN KEY (`purchase_invoice_id`) REFERENCES `purchase_invoice` (`purchase_invoice_id`),
-  CONSTRAINT `fk_supplier_id_purchase_retrun` FOREIGN KEY (`supplier_id`) REFERENCES `core_supplier` (`supplier_id`)
+  CONSTRAINT `fk_supplier_id_purchase_retrun` FOREIGN KEY (`supplier_id`) REFERENCES `core_supplier` (`supplier_id`),
+  CONSTRAINT `Fk_warehouse_id` FOREIGN KEY (`warehouse_id`) REFERENCES `invt_warehouse` (`warehouse_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 /*Data for the table `purchase_return` */
@@ -18249,18 +18279,18 @@ CREATE TABLE `purchase_return` (
 DROP TABLE IF EXISTS `purchase_return_item`;
 
 CREATE TABLE `purchase_return_item` (
-  `purchase_item_id` int(20) NOT NULL AUTO_INCREMENT,
-  `company_id` int(10) DEFAULT NULL,
-  `purchase_return_id` int(20) DEFAULT NULL,
-  `item_category_id` int(20) DEFAULT NULL,
-  `item_id` int(20) DEFAULT NULL,
-  `item_unit_id` int(20) DEFAULT NULL,
-  `purchase_item_cost` varchar(255) DEFAULT NULL,
-  `purchase_item_quantity` varchar(225) DEFAULT NULL,
-  `purchase_item_subtotal` varchar(225) DEFAULT NULL,
-  `data_state` int(1) DEFAULT 0,
-  `created_id` int(10) DEFAULT NULL,
-  `updated_id` int(10) DEFAULT NULL,
+  `purchase_item_id` int NOT NULL AUTO_INCREMENT,
+  `company_id` int DEFAULT NULL,
+  `purchase_return_id` int DEFAULT NULL,
+  `item_category_id` int DEFAULT NULL,
+  `item_id` int DEFAULT NULL,
+  `item_unit_id` int DEFAULT NULL,
+  `purchase_item_cost` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `purchase_item_quantity` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `purchase_item_subtotal` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `data_state` int DEFAULT '0',
+  `created_id` int DEFAULT NULL,
+  `updated_id` int DEFAULT NULL,
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL,
   PRIMARY KEY (`purchase_item_id`),
@@ -18269,11 +18299,11 @@ CREATE TABLE `purchase_return_item` (
   KEY `fk_category_id_return_item` (`item_category_id`),
   KEY `fk_item_id_return_item` (`item_id`),
   KEY `fk_item_unit_id_return_item` (`item_unit_id`),
-  CONSTRAINT `FK_Purchase_return_id` FOREIGN KEY (`purchase_return_id`) REFERENCES `purchase_return` (`purchase_return_id`),
   CONSTRAINT `fk_category_id_return_item` FOREIGN KEY (`item_category_id`) REFERENCES `invt_item_category` (`item_category_id`),
   CONSTRAINT `fk_company_id_return_item` FOREIGN KEY (`company_id`) REFERENCES `preference_company` (`company_id`),
   CONSTRAINT `fk_item_id_return_item` FOREIGN KEY (`item_id`) REFERENCES `invt_item_copy` (`item_id`),
-  CONSTRAINT `fk_item_unit_id_return_item` FOREIGN KEY (`item_unit_id`) REFERENCES `invt_item_unit` (`item_unit_id`)
+  CONSTRAINT `fk_item_unit_id_return_item` FOREIGN KEY (`item_unit_id`) REFERENCES `invt_item_unit` (`item_unit_id`),
+  CONSTRAINT `FK_Purchase_return_id` FOREIGN KEY (`purchase_return_id`) REFERENCES `purchase_return` (`purchase_return_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 /*Data for the table `purchase_return_item` */
@@ -18283,18 +18313,18 @@ CREATE TABLE `purchase_return_item` (
 DROP TABLE IF EXISTS `sales_consignment`;
 
 CREATE TABLE `sales_consignment` (
-  `sales_consignment_id` bigint(20) NOT NULL AUTO_INCREMENT,
-  `sales_consignment_no` varchar(255) DEFAULT NULL,
+  `sales_consignment_id` bigint NOT NULL AUTO_INCREMENT,
+  `sales_consignment_no` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `sales_consignment_date` date DEFAULT NULL,
-  `company_id` varchar(255) DEFAULT '1',
-  `purchase_invoice_id` int(11) DEFAULT NULL,
+  `company_id` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT '1',
+  `purchase_invoice_id` int DEFAULT NULL,
   `purchase_invoice_date` date DEFAULT NULL,
-  `supplier_id` int(11) DEFAULT NULL,
-  `consignment_status` int(11) DEFAULT 0,
-  `data_state` int(11) DEFAULT 0,
-  `created_id` int(11) DEFAULT NULL,
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  `updated_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `supplier_id` int DEFAULT NULL,
+  `consignment_status` int DEFAULT '0',
+  `data_state` int DEFAULT '0',
+  `created_id` int DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   KEY `sales_consignment_id` (`sales_consignment_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
@@ -18305,23 +18335,23 @@ CREATE TABLE `sales_consignment` (
 DROP TABLE IF EXISTS `sales_consignment_item`;
 
 CREATE TABLE `sales_consignment_item` (
-  `sales_consignment_item_id` int(11) NOT NULL AUTO_INCREMENT,
-  `sales_consignment_id` int(11) DEFAULT NULL,
-  `sales_invoice_id` int(11) DEFAULT NULL,
-  `sales_invoice_no` varchar(255) DEFAULT NULL,
+  `sales_consignment_item_id` int NOT NULL AUTO_INCREMENT,
+  `sales_consignment_id` int DEFAULT NULL,
+  `sales_invoice_id` int DEFAULT NULL,
+  `sales_invoice_no` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `sales_invoice_date` date DEFAULT NULL,
-  `customer_id` int(11) DEFAULT NULL,
-  `item_id` int(11) DEFAULT NULL,
-  `price_quantity` varchar(255) DEFAULT NULL,
-  `cost_quantity` varchar(255) DEFAULT NULL,
-  `item_unit_cost` varchar(255) DEFAULT NULL,
-  `item_unit_price` varchar(255) DEFAULT NULL,
-  `total_price` varchar(255) DEFAULT NULL,
-  `total_cost` varchar(255) DEFAULT NULL,
-  `total_profit` varchar(255) DEFAULT NULL,
-  `created_id` int(11) DEFAULT NULL,
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  `updated_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `customer_id` int DEFAULT NULL,
+  `item_id` int DEFAULT NULL,
+  `price_quantity` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `cost_quantity` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `item_unit_cost` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `item_unit_price` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `total_price` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `total_cost` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `total_profit` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `created_id` int DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   KEY `sales_consignment_item_id` (`sales_consignment_item_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
@@ -18332,14 +18362,14 @@ CREATE TABLE `sales_consignment_item` (
 DROP TABLE IF EXISTS `sales_customer`;
 
 CREATE TABLE `sales_customer` (
-  `customer_id` int(10) NOT NULL AUTO_INCREMENT,
-  `company_id` int(10) DEFAULT NULL,
-  `customer_name` varchar(250) DEFAULT NULL,
-  `customer_gender` int(1) DEFAULT NULL,
-  `customer_status` int(1) DEFAULT 0,
-  `data_state` int(1) DEFAULT 0,
-  `created_id` int(10) DEFAULT NULL,
-  `updated_id` int(10) DEFAULT NULL,
+  `customer_id` int NOT NULL AUTO_INCREMENT,
+  `company_id` int DEFAULT NULL,
+  `customer_name` varchar(250) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `customer_gender` int DEFAULT NULL,
+  `customer_status` int DEFAULT '0',
+  `data_state` int DEFAULT '0',
+  `created_id` int DEFAULT NULL,
+  `updated_id` int DEFAULT NULL,
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL,
   PRIMARY KEY (`customer_id`),
@@ -18354,92 +18384,99 @@ CREATE TABLE `sales_customer` (
 DROP TABLE IF EXISTS `sales_invoice`;
 
 CREATE TABLE `sales_invoice` (
-  `sales_invoice_id` int(10) NOT NULL AUTO_INCREMENT,
-  `company_id` int(10) DEFAULT NULL,
-  `customer_id` int(10) DEFAULT NULL,
-  `voucher_id` int(10) DEFAULT NULL,
-  `voucher_no` varchar(250) DEFAULT NULL,
-  `sales_invoice_no` varchar(225) DEFAULT NULL,
-  `purchase_invoice_no` varchar(255) DEFAULT '0',
-  `sales_invoice_date` varchar(225) DEFAULT NULL,
-  `sales_payment_method` int(1) DEFAULT NULL,
-  `subtotal_item` varchar(225) DEFAULT NULL,
-  `subtotal_amount` varchar(225) DEFAULT NULL,
-  `voucher_amount` varchar(225) DEFAULT NULL,
-  `tempo` int(11) DEFAULT 0,
-  `discount_percentage_total` varchar(225) DEFAULT NULL,
-  `discount_amount_total` varchar(225) DEFAULT NULL,
-  `total_amount` varchar(225) DEFAULT NULL,
-  `paid_amount` varchar(225) DEFAULT NULL,
-  `change_amount` varchar(225) DEFAULT NULL,
-  `table_no` varchar(250) DEFAULT NULL,
-  `payment_method` int(10) DEFAULT NULL,
-  `from_store` int(1) DEFAULT NULL,
-  `status_upload` int(1) DEFAULT 0,
-  `data_state` int(1) DEFAULT 0,
-  `created_id` int(10) DEFAULT NULL,
-  `updated_id` int(10) DEFAULT NULL,
+  `sales_invoice_id` int NOT NULL AUTO_INCREMENT,
+  `company_id` int DEFAULT NULL,
+  `customer_id` int DEFAULT NULL,
+  `voucher_id` int DEFAULT NULL,
+  `voucher_no` varchar(250) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `sales_invoice_no` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `purchase_invoice_no` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT '0',
+  `sales_invoice_date` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `sales_payment_method` int DEFAULT NULL,
+  `subtotal_item` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `subtotal_amount` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `voucher_amount` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `tempo` int DEFAULT '0',
+  `discount_percentage_total` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `discount_amount_total` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `total_amount` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `paid_amount` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `change_amount` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `table_no` varchar(250) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `payment_method` int DEFAULT NULL,
+  `from_store` int DEFAULT NULL,
+  `status_upload` int DEFAULT '0',
+  `data_state` int DEFAULT '0',
+  `created_id` int DEFAULT NULL,
+  `updated_id` int DEFAULT NULL,
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL,
-  `dump_id` varchar(255) DEFAULT NULL,
+  `dump_id` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   PRIMARY KEY (`sales_invoice_id`),
   KEY `fk_company_id_sales_invoice` (`company_id`),
   KEY `fk_voucher_id_sales_invoice` (`voucher_id`),
   CONSTRAINT `fk_company_id_sales_invoice` FOREIGN KEY (`company_id`) REFERENCES `preference_company` (`company_id`),
   CONSTRAINT `fk_voucher_id_sales_invoice` FOREIGN KEY (`voucher_id`) REFERENCES `preference_voucher` (`voucher_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=43 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 /*Data for the table `sales_invoice` */
+
+insert  into `sales_invoice`(`sales_invoice_id`,`company_id`,`customer_id`,`voucher_id`,`voucher_no`,`sales_invoice_no`,`purchase_invoice_no`,`sales_invoice_date`,`sales_payment_method`,`subtotal_item`,`subtotal_amount`,`voucher_amount`,`tempo`,`discount_percentage_total`,`discount_amount_total`,`total_amount`,`paid_amount`,`change_amount`,`table_no`,`payment_method`,`from_store`,`status_upload`,`data_state`,`created_id`,`updated_id`,`created_at`,`updated_at`,`dump_id`) values 
+(1,1,1,NULL,NULL,'KR2024060001',NULL,'2024-06-27',2,'2','13500','0',2,'0','0','13500','13500','-13500',NULL,NULL,1,0,0,55,55,'2024-06-27 17:17:53','2024-06-27 17:17:53','1');
 
 /*Table structure for table `sales_invoice_item` */
 
 DROP TABLE IF EXISTS `sales_invoice_item`;
 
 CREATE TABLE `sales_invoice_item` (
-  `sales_invoice_item_id` int(10) NOT NULL AUTO_INCREMENT,
-  `company_id` int(10) DEFAULT NULL,
-  `sales_invoice_id` int(10) DEFAULT NULL,
-  `item_category_id` int(10) DEFAULT NULL,
-  `item_unit_id` int(10) DEFAULT NULL,
-  `item_id` int(10) DEFAULT NULL,
-  `quantity` varchar(225) DEFAULT NULL,
-  `item_unit_price` varchar(225) DEFAULT NULL,
-  `item_unit_cost` varchar(255) DEFAULT '0',
-  `subtotal_amount` varchar(225) DEFAULT NULL,
-  `discount_percentage` varchar(225) DEFAULT NULL,
-  `discount_amount` varchar(225) DEFAULT NULL,
-  `sales_tax_amount` varchar(255) DEFAULT NULL,
-  `subtotal_amount_after_discount` varchar(225) DEFAULT NULL,
-  `item_remark` varchar(250) DEFAULT NULL,
-  `status_upload` int(1) DEFAULT 0,
-  `bkp` int(11) DEFAULT 0,
-  `data_state` int(1) DEFAULT 0,
-  `created_id` int(10) DEFAULT NULL,
-  `updated_id` int(10) DEFAULT NULL,
+  `sales_invoice_item_id` int NOT NULL AUTO_INCREMENT,
+  `company_id` int DEFAULT NULL,
+  `sales_invoice_id` int DEFAULT NULL,
+  `item_category_id` int DEFAULT NULL,
+  `item_unit_id` int DEFAULT NULL,
+  `item_id` int DEFAULT NULL,
+  `quantity` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `item_unit_price` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `item_unit_cost` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT '0',
+  `subtotal_amount` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `discount_percentage` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `discount_amount` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `sales_tax_amount` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `subtotal_amount_after_discount` varchar(225) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `item_remark` varchar(250) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `status_upload` int DEFAULT '0',
+  `bkp` int DEFAULT '0',
+  `data_state` int DEFAULT '0',
+  `created_id` int DEFAULT NULL,
+  `updated_id` int DEFAULT NULL,
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL,
-  `dump_id` varchar(255) DEFAULT NULL,
+  `dump_id` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   PRIMARY KEY (`sales_invoice_item_id`),
   KEY `FK_sales_invoice_item` (`item_id`),
   KEY `FK_sales_invoice_category` (`item_category_id`),
   KEY `FK_sales_invoice_unit` (`item_unit_id`),
   KEY `FK_sales_invoice_id` (`sales_invoice_id`),
   KEY `fk_company_id_sales_invoice_item` (`company_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=44 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 /*Data for the table `sales_invoice_item` */
+
+insert  into `sales_invoice_item`(`sales_invoice_item_id`,`company_id`,`sales_invoice_id`,`item_category_id`,`item_unit_id`,`item_id`,`quantity`,`item_unit_price`,`item_unit_cost`,`subtotal_amount`,`discount_percentage`,`discount_amount`,`sales_tax_amount`,`subtotal_amount_after_discount`,`item_remark`,`status_upload`,`bkp`,`data_state`,`created_id`,`updated_id`,`created_at`,`updated_at`,`dump_id`) values 
+(1,1,1,12,15,2,'1','9000','6350','9000',NULL,NULL,'0','9000',NULL,0,0,0,55,55,'2024-06-27 17:17:53','2024-06-27 17:17:54','1'),
+(2,1,1,14,15,1,'1','4500','2696','4500',NULL,NULL,'0','4500',NULL,0,0,0,55,55,'2024-06-27 17:17:54','2024-06-27 17:17:54','1');
 
 /*Table structure for table `sessions` */
 
 DROP TABLE IF EXISTS `sessions`;
 
 CREATE TABLE `sessions` (
-  `id` varchar(255) NOT NULL,
-  `user_id` bigint(20) unsigned DEFAULT NULL,
-  `ip_address` varchar(45) DEFAULT NULL,
-  `user_agent` text DEFAULT NULL,
-  `payload` text NOT NULL,
-  `last_activity` int(11) NOT NULL,
+  `id` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `user_id` bigint unsigned DEFAULT NULL,
+  `ip_address` varchar(45) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `user_agent` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `payload` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `last_activity` int NOT NULL,
   PRIMARY KEY (`id`),
   KEY `sessions_user_id_index` (`user_id`),
   KEY `sessions_last_activity_index` (`last_activity`)
@@ -18452,16 +18489,16 @@ CREATE TABLE `sessions` (
 DROP TABLE IF EXISTS `sii_remove_log`;
 
 CREATE TABLE `sii_remove_log` (
-  `sii_remove_log_id` int(10) NOT NULL AUTO_INCREMENT,
-  `company_id` int(10) DEFAULT NULL,
-  `sales_invoice_id` int(10) DEFAULT NULL,
-  `sales_invoice_item_id` int(10) DEFAULT NULL,
-  `sales_invoice_no` varchar(250) DEFAULT NULL,
-  `sii_amount` varchar(250) DEFAULT NULL,
-  `data_state` int(1) DEFAULT 0,
-  `status_upload` int(1) DEFAULT 0,
-  `created_id` int(10) DEFAULT NULL,
-  `updated_id` int(10) DEFAULT NULL,
+  `sii_remove_log_id` int NOT NULL AUTO_INCREMENT,
+  `company_id` int DEFAULT NULL,
+  `sales_invoice_id` int DEFAULT NULL,
+  `sales_invoice_item_id` int DEFAULT NULL,
+  `sales_invoice_no` varchar(250) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `sii_amount` varchar(250) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `data_state` int DEFAULT '0',
+  `status_upload` int DEFAULT '0',
+  `created_id` int DEFAULT NULL,
+  `updated_id` int DEFAULT NULL,
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL,
   PRIMARY KEY (`sii_remove_log_id`),
@@ -18480,14 +18517,14 @@ CREATE TABLE `sii_remove_log` (
 DROP TABLE IF EXISTS `system_log_user`;
 
 CREATE TABLE `system_log_user` (
-  `user_log_id` bigint(20) NOT NULL AUTO_INCREMENT,
-  `user_id` int(10) DEFAULT 0,
-  `username` varchar(50) DEFAULT '',
-  `id_previllage` int(4) DEFAULT 0,
-  `log_stat` enum('0','1') DEFAULT NULL,
-  `class_name` varchar(250) DEFAULT '',
-  `pk` varchar(20) DEFAULT '',
-  `remark` varchar(50) DEFAULT NULL,
+  `user_log_id` bigint NOT NULL AUTO_INCREMENT,
+  `user_id` int DEFAULT '0',
+  `username` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT '',
+  `id_previllage` int DEFAULT '0',
+  `log_stat` enum('0','1') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `class_name` varchar(250) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT '',
+  `pk` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT '',
+  `remark` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `log_time` datetime DEFAULT NULL,
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL,
@@ -18501,12 +18538,12 @@ CREATE TABLE `system_log_user` (
 DROP TABLE IF EXISTS `system_login_log`;
 
 CREATE TABLE `system_login_log` (
-  `login_log_id` bigint(20) NOT NULL AUTO_INCREMENT,
-  `user_id` int(10) DEFAULT 0,
-  `company_id` int(10) DEFAULT NULL,
+  `login_log_id` bigint NOT NULL AUTO_INCREMENT,
+  `user_id` int DEFAULT '0',
+  `company_id` int DEFAULT NULL,
   `log_time` datetime DEFAULT NULL,
-  `log_status` int(1) DEFAULT NULL,
-  `status_upload` int(1) DEFAULT 0,
+  `log_status` int DEFAULT NULL,
+  `status_upload` int DEFAULT '0',
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL,
   PRIMARY KEY (`login_log_id`),
@@ -18567,14 +18604,14 @@ insert  into `system_login_log`(`login_log_id`,`user_id`,`company_id`,`log_time`
 DROP TABLE IF EXISTS `system_menu`;
 
 CREATE TABLE `system_menu` (
-  `id_menu` varchar(10) NOT NULL,
-  `id` varchar(100) DEFAULT NULL,
-  `type` enum('folder','file','function') DEFAULT NULL,
-  `indent_level` int(1) DEFAULT NULL,
-  `text` varchar(50) DEFAULT NULL,
-  `image` varchar(50) DEFAULT NULL,
-  `company_id` int(10) DEFAULT NULL,
-  `last_update` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `id_menu` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `id` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `type` enum('folder','file','function') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `indent_level` int DEFAULT NULL,
+  `text` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `image` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `company_id` int DEFAULT NULL,
+  `last_update` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id_menu`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
@@ -18607,7 +18644,7 @@ insert  into `system_menu`(`id_menu`,`id`,`type`,`indent_level`,`text`,`image`,`
 ('38','sales-invoice-by-year-report','file',3,'Laporan Penjualan Tahunan',NULL,NULL,'2022-07-18 14:39:53'),
 ('39','sales-invoice-recap','file',3,'Rekap Penjualan',NULL,NULL,'2023-02-15 10:46:09'),
 ('4','#','folder',1,'Keuangan',NULL,NULL,'2022-06-14 11:15:12'),
-('41','purchase-payment','file',2,'Pelunasan Hutang',NULL,NULL,'2022-09-07 15:08:49'),
+('41','purchase-payment','file',2,'Pelunasan Hutang',NULL,NULL,'2024-04-01 15:27:58'),
 ('42','consignment-delivery','file',2,'Penyerahan Konsinyasi',NULL,NULL,'2023-10-13 09:21:54'),
 ('46','#','file',2,'Laporan',NULL,NULL,'2022-06-14 11:20:35'),
 ('47','cash-receipts-report','file',3,'Laporan Penerimaan Kas',NULL,NULL,'2022-07-22 09:06:44'),
@@ -18652,13 +18689,13 @@ insert  into `system_menu`(`id_menu`,`id`,`type`,`indent_level`,`text`,`image`,`
 DROP TABLE IF EXISTS `system_menu_mapping`;
 
 CREATE TABLE `system_menu_mapping` (
-  `menu_mapping_id` int(10) NOT NULL AUTO_INCREMENT,
-  `company_id` int(10) DEFAULT NULL,
-  `user_group_level` int(3) DEFAULT NULL,
-  `id_menu` varchar(10) DEFAULT NULL,
-  `data_state` int(1) DEFAULT 0,
+  `menu_mapping_id` int NOT NULL AUTO_INCREMENT,
+  `company_id` int DEFAULT NULL,
+  `user_group_level` int DEFAULT NULL,
+  `id_menu` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `data_state` int DEFAULT '0',
   `created_at` datetime DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`menu_mapping_id`),
   KEY `FK_system_menu_mapping_id_menu` (`id_menu`),
   KEY `fk_company_id_menu_mapping` (`company_id`)
@@ -18751,18 +18788,18 @@ insert  into `system_menu_mapping`(`menu_mapping_id`,`company_id`,`user_group_le
 DROP TABLE IF EXISTS `system_user`;
 
 CREATE TABLE `system_user` (
-  `user_id` int(10) NOT NULL AUTO_INCREMENT,
-  `company_id` int(10) DEFAULT NULL,
-  `user_group_id` int(3) DEFAULT NULL,
-  `full_name` varchar(255) DEFAULT '',
-  `name` varchar(255) DEFAULT '',
-  `phone_number` varchar(255) DEFAULT '',
-  `section_id` int(10) DEFAULT 0,
-  `email` varchar(255) DEFAULT NULL,
+  `user_id` int NOT NULL AUTO_INCREMENT,
+  `company_id` int DEFAULT NULL,
+  `user_group_id` int DEFAULT NULL,
+  `full_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT '',
+  `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT '',
+  `phone_number` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT '',
+  `section_id` int DEFAULT '0',
+  `email` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `email_verified_at` timestamp NULL DEFAULT NULL,
-  `password` varchar(255) NOT NULL,
-  `remember_token` varchar(100) DEFAULT NULL,
-  `data_state` int(1) DEFAULT 0,
+  `password` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `remember_token` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `data_state` int DEFAULT '0',
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`user_id`),
@@ -18781,19 +18818,19 @@ insert  into `system_user`(`user_id`,`company_id`,`user_group_id`,`full_name`,`n
 DROP TABLE IF EXISTS `system_user_group`;
 
 CREATE TABLE `system_user_group` (
-  `user_group_id` int(3) NOT NULL AUTO_INCREMENT,
-  `company_id` int(10) DEFAULT NULL,
-  `user_group_level` int(11) DEFAULT NULL,
-  `user_group_name` varchar(50) DEFAULT NULL,
-  `user_group_token` varchar(250) DEFAULT '',
-  `data_state` int(1) DEFAULT 0,
-  `created_id` int(10) DEFAULT 0,
+  `user_group_id` int NOT NULL AUTO_INCREMENT,
+  `company_id` int DEFAULT NULL,
+  `user_group_level` int DEFAULT NULL,
+  `user_group_name` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `user_group_token` varchar(250) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT '',
+  `data_state` int DEFAULT '0',
+  `created_id` int DEFAULT '0',
   `created_at` datetime DEFAULT NULL,
-  `updated_id` int(10) DEFAULT 0,
+  `updated_id` int DEFAULT '0',
   `updated_on` datetime DEFAULT NULL,
-  `deleted_id` int(10) DEFAULT 0,
+  `deleted_id` int DEFAULT '0',
   `deleted_on` datetime DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`user_group_id`),
   KEY `fk_company_id_user_group` (`company_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -18810,12 +18847,12 @@ insert  into `system_user_group`(`user_group_id`,`company_id`,`user_group_level`
 DROP TABLE IF EXISTS `users`;
 
 CREATE TABLE `users` (
-  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-  `name` varchar(255) NOT NULL,
-  `email` varchar(255) NOT NULL,
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `email` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `email_verified_at` timestamp NULL DEFAULT NULL,
-  `password` varchar(255) NOT NULL,
-  `remember_token` varchar(100) DEFAULT NULL,
+  `password` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `remember_token` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`id`),
