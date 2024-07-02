@@ -141,22 +141,16 @@
                         <td>Tunai</td>
                         @endif
                         @if ($row['sales_payment_method'] == 2)
-                        <td>Piutang</td>
+                        <td>Kredit</td>
                         @endif
                         @if ($row['sales_payment_method'] == 3)
-                        <td>Gopay</td>
+                        <td>Piutang Beras</td>
                         @endif
                         @if ($row['sales_payment_method'] == 4)
-                        <td>Ovo</td>
+                        <td>Piutang Barang</td>
                         @endif
                         @if ($row['sales_payment_method'] == 5)
-                        <td>Shopeepay</td>
-                        @endif
-                        @if ($row['sales_payment_method'] == 6)
-                        <td>Konsinyasi</td>
-                        @endif
-                        @if ($row['sales_payment_method'] == 7)
-                        <td>PJL Varian</td>
+                        <td>Varian</td>
                         @endif
                  
                         <td style="text-align: right">{{ number_format($row['total_amount'],2,'.',',') }}</td>

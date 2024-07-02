@@ -1847,8 +1847,8 @@ class ApiController extends Controller
                     JournalVoucherItem::create($journal_debit_bkp);
                     $datacoremember = CoreMember::where('member_id', $val['customer_id'])
                     ->first();
-                CoreMember::where('member_id', $val['customer_id'])
-                    ->update(['member_account_receivable_amount_temp' => $datacoremember['member_account_receivable_amount_temp'] +  $val['total_amount'],]);
+                CoreMember::where('member_id', $val['customer_id']);
+                    // ->update(['member_account_receivable_amount_temp' => $datacoremember['member_account_receivable_amount_temp'] +  $val['total_amount'],]);
                 }
 
 
