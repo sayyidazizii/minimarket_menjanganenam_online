@@ -138,23 +138,24 @@ class PurchaseInvoiceController extends Controller
         $arraydatases = collect();
         $arraydatases->put('item_packge_id', $request->item_packge_id);
         $arraydatases->put('item_name', $item_packge->item->item_name);
-        $arraydatases->put('margin_percentage', $item_packge->item->margin_percentage);
+        $arraydatases->put('margin_percentage_old', $request->margin_percentage_old);
+        $arraydatases->put('margin_percentage_new', $request->margin_percentage_new);
+        $arraydatases->put('profit', $request->profit);
         $arraydatases->put('item_category_id', $item_packge->item_category_id);
         $arraydatases->put('item_id', $item_packge->item_id);
         $arraydatases->put('item_unit_id', $item_packge->item_unit_id);
         $arraydatases->put('item_unit_cost', $request->item_unit_cost);
-        $arraydatases->put('item_unit_cost_ori', $item_packge->item_unit_cost);
         $arraydatases->put('item_unit_cost_final', $item_packge->item_unit_cost_final);
         $arraydatases->put('item_unit_ppn_ori', $item_packge->item_unit_ppn);
         $arraydatases->put('item_unit_cost_after_ppn', ($request->item_unit_cost + ($request->item_unit_cost * $request->item_unit_ppn / 100)));
         $arraydatases->put('item_unit_ppn', $request->item_unit_ppn);
-        $arraydatases->put('ppn_percentage_old', $update_hoistory->ppn_percentage_old ?? null);
+        $arraydatases->put('ppn_percentage_old', $request->ppn_percentage_old);
+        $arraydatases->put('ppn_percentage_new', $request->ppn_percentage_new);
         $arraydatases->put('quantity', $request->quantity);
         $arraydatases->put('subtotal_amount', $request->subtotal_amount);
         $arraydatases->put('discount_percentage', ($request->discount_percentage == null ? 0 : $request->discount_percentage));
         $arraydatases->put('discount_amount', ($request->discount_amount == null ? 0 : $request->discount_amount));
         // $arraydatases->put('discount_percentage_ori'         ,($item_packge->item_unit_discount??0));
-        $arraydatases->put('discount_percentage_ori', 0);
         $arraydatases->put('discount_amount_per_unit', ($item_packge->item_unit_cost * $request->discount_amount / 100));
         $arraydatases->put('discount_amount_per_unit_ori', ($item_packge->item_unit_cost * $item_packge->item_unit_discount / 100));
         $arraydatases->put('subtotal_amount_after_discount', $request->subtotal_amount_after_discount);
@@ -166,7 +167,8 @@ class PurchaseInvoiceController extends Controller
         $arraydatases->put('remark', $request->remark);
         $arraydatases->put('item_cost_new', $request->item_cost_new);
         $arraydatases->put('item_price_new', $request->item_price_new);
-        $arraydatases->put('margin_percentage', $request->margin_percentage);
+        $arraydatases->put('item_unit_cost_ori', $item_packge->item_unit_cost);
+        $arraydatases->put('item_price_old', $request->item_price_old);
 
         $lastdatases = collect(Session::get('arraydatases'));
         // * when item already on list
@@ -220,6 +222,7 @@ class PurchaseInvoiceController extends Controller
 
     public function processAddPurchaseInvoice(Request $request)
     {
+        // dd($request->all(),Session::get('arraydatases'));
         try {
             DB::beginTransaction();
             $transaction_module_code = 'PBL';
@@ -228,7 +231,6 @@ class PurchaseInvoiceController extends Controller
                 'supplier_id'               => 'required',
                 'warehouse_id'              => 'required',
                 'purchase_invoice_date'     => 'required',
-                'purchase_invoice_remark'   => '',
                 'subtotal_item'             => 'required',
                 'purchase_payment_method'   => 'required',
                 'subtotal_amount_total'     => 'required',
@@ -249,7 +251,7 @@ class PurchaseInvoiceController extends Controller
                 'purchase_payment_method'   => $fields['purchase_payment_method'],
                 'purchase_invoice_date'     => $fields['purchase_invoice_date'],
                 'purchase_invoice_due_date' => date('Y-m-d', strtotime('+' . $request['purchase_invoice_due_day'] . ' days', strtotime($fields['purchase_invoice_date']))),
-                'purchase_invoice_remark'   => $fields['purchase_invoice_remark'],
+                'purchase_invoice_remark'   => $request->purchase_invoice_remark,
                 'subtotal_item'             => $fields['subtotal_item'],
                 'discount_percentage_total' => $discount_percentage_total,
                 'discount_amount_total'     => $discount_amount_total,
@@ -264,8 +266,9 @@ class PurchaseInvoiceController extends Controller
                 'created_id'                => Auth::id(),
                 'updated_id'                => Auth::id()
             );
-            PurchaseInvoice::create($datases);
-            $purchase_invoice_id = PurchaseInvoice::orderBy('created_at', 'DESC')->where('company_id', Auth::user()->company_id)->first();
+            // dd($datases,$request->all(),Session::get('arraydatases'));
+            $pi=PurchaseInvoice::create($datases);
+            $pi = $pi->refresh();
             $journal = array(
                 'company_id'                    => Auth::user()->company_id,
                 'transaction_module_id'         => $transaction_module_id,
@@ -274,16 +277,17 @@ class PurchaseInvoiceController extends Controller
                 'journal_voucher_date'          => $fields['purchase_invoice_date'],
                 'journal_voucher_description'   => $this->getTransactionModuleName($transaction_module_code),
                 'journal_voucher_period'        => date('Ym'),
-                'transaction_journal_no'        => $purchase_invoice_id['purchase_invoice_no'],
+                'transaction_journal_no'        => $pi->purchase_invoice_no,
+                'transaction_journal_id'        => $pi->purchase_invoice_id,
                 'journal_voucher_title'         => $this->getTransactionModuleName($transaction_module_code),
                 'created_id'                    => Auth::id(),
                 'updated_id'                    => Auth::id()
             );
-            JournalVoucher::create($journal);
+            $jv=JournalVoucher::create($journal);
                 $arraydatases = Session::get('arraydatases');
                 foreach ($arraydatases as $key => $val) {
                     $dataarray = array(
-                        'purchase_invoice_id'               => $purchase_invoice_id['purchase_invoice_id'],
+                        'purchase_invoice_id'               => $pi->purchase_invoice_id,
                         'item_category_id'                  => $val['item_category_id'],
                         'item_unit_id'                      => $val['item_unit_id'],
                         'item_id'                           => $val['item_id'],
@@ -317,7 +321,6 @@ class PurchaseInvoiceController extends Controller
                         ->where('company_id', Auth::user()->company_id)
                         ->first();
                     $item_packge = InvtItemPackge::where('item_id', $dataarray['item_id'])
-                        ->where('item_category_id', $dataarray['item_category_id'])
                         ->where('item_unit_id', $dataarray['item_unit_id'])
                         ->where('company_id', Auth::user()->company_id)
                         ->first();
@@ -331,60 +334,54 @@ class PurchaseInvoiceController extends Controller
                     }
                     if($val['ischanged']==1){
                         $table              = InvtItemPackge::with('item')->find($val['item_packge_id']);
-                        $lastdata           = ItemCostUpdate::latest()->first();
+                        $lastdata           = ItemCostUpdate::where('item_packge_id',$val['item_packge_id'])->latest()->first();
                         $itm = InvtItem::find($table->item_id);
                         $itm->item_unit_cost=$val['item_cost_new'];
                         $itm->item_unit_price=$val['item_price_new'];
                         $itm->save();
                         $qty = 0;
-                        $token = null;
-                        $lastdatases = collect(Session::get('arraydatases'));
-                        if(count($lastdatases->where('item_packge_id',$val['item_packge_id']))){
-                            $initem = 1;
-                            $lastdatases =$lastdatases[$val['item_packge_id']];
-                            $qty = $lastdatases['quantity']??0;
-                            $token = $lastdatases['item_token']??0;
-                        }
+                        $qty = $val['quantity']??0;
+                        $token = $val['item_token']??0;
                         $created=ItemCostUpdate::create([
                             'item_packge_id' => $val['item_packge_id'],
                             'item_id' => $table->item_id,
 
                             'purchase_quanity' => $val['quantity']??$qty,
-                            'purchase_date' => empty($request->purchase_invoice_date)?Carbon::now()->format('Y-m-d'):Carbon::parse($request->purchase_invoice_date0)->format('Y-m-d'),
+                            'purchase_date' => empty($request->purchase_invoice_date)?Carbon::now()->format('Y-m-d'):Carbon::parse($request->purchase_invoice_date)->format('Y-m-d'),
 
-                            'margin_percentage_old' => ($request->margin_percentage_old??0),
+                            'margin_percentage_old' => ($val['margin_percentage_old']??0),
                             'discount_percentage_old'   => ($lastdata->discount_percentage_new??0),
-                            'ppn_percentage_old'    => ($lastdata->ppn_percentage_new??$request->tax_ppn_percentage_old??0),
+                            'ppn_percentage_old'    => ($lastdata->ppn_percentage_new??$val['ppn_percentage_old']??0),
                             'discount_amount_old'   => ($lastdata->discount_amount_new??0),
-                            'ppn_amount_old'    => ($request->ppn_amount??0),
-                            'item_cost_old' => ($request->item_cost_old??0),
-                            'item_price_old'    => ($request->item_price_old??0),
-                            'profit_old'     => $lastdata->profit_new??(empty($request->item_cost_old)?0:($request->item_cost_old* $request->margin_percentage_old/100)),
+                            'ppn_amount_old'    => ($lastdata->ppn_amount??0),
+                            'item_cost_old' => ($val['item_unit_cost_ori']??0),
+                            'item_price_old'    => ($val['item_price_old']??0),
+                            'profit_old'     => $lastdata->profit_new??(empty($val['item_unit_cost_ori'])?0:($val['item_unit_cost_ori']* $val['margin_percentage_old']/100)),
 
-                            'margin_percentage_new'     => $request->margin_percentage_new,
-                            'profit_new'                => $request->profit,
-                            'discount_percentage_new'   => $request->discount_percentage_new,
-                            'ppn_percentage_new'        => $request->ppn_percentage_new,
-                            'discount_amount_new'       => $request->discount_amount_new,
-                            'ppn_amount_new'            => $request->ppn_amount_new,
-                            'item_cost_new'             => $request->item_cost_new,
-                            'item_price_new'            => $request->item_price_new,
+                            'margin_percentage_new'     => $val["margin_percentage_new"],
+                            'profit_new'                => $val["profit"],
+                            'discount_percentage_new'   => $val['discount_percentage'],
+                            'ppn_percentage_new'        => $val['ppn_percentage_new'],
+                            'discount_amount_new'       => $val['discount_amount_new'],
+                            'ppn_amount_new'            => $val['discount_amount'],
+                            'item_cost_new'             => $val['item_cost_new'],
+                            'item_price_new'            => $val['item_price_new'],
 
                             'token'            => $token,
 
                             'change_date' => Carbon::now(),
-                            'remark'    => $request->remark,
+                            'remark'    => $val['remark'],
                             'created_id' => Auth::id()
                         ]);
-                        $table->item_unit_ppn         = $request->ppn_percentage_new;
-                        $table->item_unit_discount    = $request->discount_percentage_new;
-                        $und = $request->item_cost_new* $request->discount_percentage_new/100;
-                        $unp = $request->item_cost_new*$request->ppn_percentage_new/100;
-                        $table->item_unit_cost_after_ppn = ($request->item_cost_new+$unp);
-                        $table->item_unit_cost_final  = ($request->item_cost_new-$und+$unp);
-                        $table->margin_percentage     = $request->margin_percentage_new;
-                        $table->item_unit_cost        = $request->item_cost_new;
-                        $table->item_unit_price       = $request->item_price_new;
+                        $table->item_unit_ppn         = $request->tax_ppn_percentage;
+                        $table->item_unit_discount    = $val['discount_percentage'];
+                        $und = $val['item_cost_new']* $val['discount_percentage']/100;
+                        $unp = $val['item_cost_new']*$request->tax_ppn_percentage/100;
+                        $table->item_unit_cost_after_ppn = ($val['item_cost_new']+$unp);
+                        $table->item_unit_cost_final  = ($val['item_cost_new']-$und+$unp);
+                        $table->margin_percentage     = $val['margin_percentage_new'];
+                        $table->item_unit_cost        = $val['item_cost_new'];
+                        $table->item_unit_price       = $val['item_price_new'];
                         $table->updated_id            = Auth::id();
                         // $crt=$created;
                         // $tbl=$table;
@@ -539,6 +536,7 @@ class PurchaseInvoiceController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             report($e);
+            dd($e);
             $msg = 'Tambah Pembelian Gagal';
             return redirect('/purchase-invoice/add')->with('msg', $msg);
         }

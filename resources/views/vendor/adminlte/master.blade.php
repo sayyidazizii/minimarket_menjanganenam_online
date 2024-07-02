@@ -257,7 +257,13 @@
                     .split('').reverse().join('');
                 return rupiah + '.' + cents.slice(0, 2);
             }
-
+            function handleEmpty(val, def = 0) {
+                if (val == "" || val === "" || val == null || val == undefined) {
+                    return def;
+                } else {
+                    return val;
+                }
+            }
             $(document).ready(function() {
                 $('#example').dataTable({
                     "aLengthMenu": [

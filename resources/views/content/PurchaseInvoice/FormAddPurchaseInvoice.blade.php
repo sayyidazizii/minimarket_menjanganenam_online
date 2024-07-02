@@ -31,53 +31,6 @@
             });
         }
 
-        $(document).ready(function() {
-            $('#item_price_new_view').change(function() {
-                var price_new = parseInt($('#item_price_new_view').val());
-                var cost_new = parseInt($('#item_cost_new').val());
-                var margin_old = parseInt($('#margin_percentage_old').val());
-                var margin = parseInt($('#margin_percentage').val());
-                var margin_percentage = ((price_new - cost_new) / cost_new) * 100;
-                // if (margin_percentage > 100) {
-                //     alert('Margin tidak boleh melebihi 100%');
-                //     $('#margin_percentage').val(margin_old);
-                //     var amount_margin = cost_new + ((cost_new * margin_old) / 100);
-                //     $('#item_price_new_view').val(toRp(amount_margin));
-                //     $('#item_price_new').val(amount_margin);
-                // } else {
-                if (Number.isInteger(margin_percentage)) {
-                    $('#margin_percentage').val(margin_percentage);
-                } else {
-                    $('#margin_percentage').val(margin_percentage.toFixed(2));
-                }
-                $('#item_price_new_view').val(toRp(price_new));
-                $('#item_price_new').val(price_new);
-                // }
-            });
-
-            $('#margin_percentage').change(function() {
-                var cost_new = parseInt($('#item_cost_new').val());
-                var margin_old = parseInt($('#margin_percentage_old').val());
-                var margin = parseInt($('#margin_percentage').val());
-                var price_new = ((margin * cost_new) / 100) + cost_new;
-                // if (margin > 100) {
-                //     alert('Margin tidak boleh melebihi 100%');
-                //     $('#margin_percentage').val(margin_old);
-                //     var amount_margin = cost_new + ((cost_new * margin_old) / 100);
-                //     $('#item_price_new_view').val(toRp(amount_margin));
-                //     $('#item_price_new').val(amount_margin);
-                // } else {
-                if (Number.isInteger(margin)) {
-                    $('#margin_percentage').val(margin);
-                } else {
-                    $('#margin_percentage').val(margin.toFixed(2));
-                }
-                $('#item_price_new_view').val(toRp(price_new));
-                $('#item_price_new').val(price_new);
-                // }
-            });
-        });
-
         function process_change_cost() {
             var item_packge_id = document.getElementById("item_packge_id").value;
             var item_cost_new = document.getElementById("item_cost_new").value;
@@ -101,7 +54,8 @@
             });
         }
 
-        function processAddArrayPurchaseInvoice() {
+            function processAddArrayPurchaseInvoice() {
+            loadingWidget();
             let item_packge_id = $("#item_packge_id").val();
             let item_unit_cost = $("#item_unit_cost").val();
             let quantity = $("#quantity").val();
@@ -113,12 +67,23 @@
             let ischanged = $('#cost_is_changed').val();
             let remark = $('#cost_change_remark').val();
             let item_cost_new = $("#item_cost_new").val();
+            let item_cost_old = $("#item_unit_cost_ori").val();
             let item_price_new = $("#item_price_new").val();
             let margin_percentage = $("#margin_percentage").val();
             let whendouble = $("#when-double-item").val();
+            let ppn = $("#tax_ppn_percentage").val();
+            let item_price_old = $("#item_price_old").val();
+            let margin_percentage_old = $("#margin_percentage_old").val();
+            let profit = $("#profit").val();
+            let profit_old = parseInt(handleEmpty(item_price_old,item_cost_old))-parseInt(item_cost_old||0);
             if(quantity==''||quantity==0){
-                alert('Harap Masukan Jumlah Pembelian Yang Valid !');return 0;
+                alert('Harap Masukan Jumlah Pembelian Yang Valid !');
+                setTimeout(() => {
+                    loadingWidget(0);
+                }, 200);
+                return 0;
             }
+            // return profit_old;
             $.ajax({
                 type: "POST",
                 url: "{{ route('add-array-purchase-invoice') }}",
@@ -126,21 +91,18 @@
                     'ischanged': ischanged,
                     'remark': remark,
                     'item_cost_new': item_cost_new,
-                    'item_cost_old': item_cost_new,
-                    'item_price_old': item_cost_new,
-                    'profit_old': item_cost_new,
+                    'item_cost_old': item_cost_old,
+                    'item_price_old': item_price_old,
+                    'profit_old': profit_old,
                     'item_price_new': item_price_new,
-                    'margin_percentage_old': margin_percentage,
+                    'margin_percentage_old': margin_percentage_old,
                     'margin_percentage_new': margin_percentage,
                     'profit': profit,
-                    'ppn':ppn,
-                    'discount_amount':ppn,
-                    'discount_percentage':ppn,
+                    'ppn_percentage_new':ppn,
 
                     'item_packge_id': item_packge_id,
                     'quantity': quantity,
                     'item_unit_cost': item_unit_cost,
-                    'item_unit_price': item_unit_price,
                     'discount_percentage': discount_percentage,
                     'discount_amount': discount_amount,
                     'subtotal_amount_after_discount': subtotal_amount_after_discount,
@@ -150,7 +112,11 @@
                     '_token': '{{ csrf_token() }}'
                 },
                 success: function(msg) {
+                    setTimeout(() => {
+                        loadingWidget(0);
+                    }, 200);
                     location.reload();
+                    console.log('uploaded');
                 }
             });
         }
@@ -435,7 +401,7 @@
                                     <input class="form-control input-bb" name="purchase_invoice_date"
                                         id="purchase_invoice_date" type="date" data-date-format="dd-mm-yyyy"
                                         autocomplete="off" onchange="function_elements_add(this.name, this.value)"
-                                        value="{{ $datases['purchase_invoice_date'] ?? '' }}" />
+                                        value="{{ $datases['purchase_invoice_date'] ?? date('Y-m-d') }}" />
                                 </div>
                             </div>
                             <div class="d-none col-md-8 row" id="due_date">
@@ -526,7 +492,7 @@
                                 <div class="form-group">
                                     <a class="text-dark">Diskon (%)</a>
                                     <input style="text-align: right" class="form-control input-bb"
-                                        name="discount_percentage" id="discount_percentage" type="text"
+                                        name="discount_percentage" id="1" type="number" min="0" max="100"
                                         autocomplete="off" value="" />
                                 </div>
                             </div>
@@ -678,7 +644,7 @@
                         </div>
                         <div class="col-6 justify-content-end">
                             <div class="form-actions float-right">
-                                <a type="submit" name="Save" class="btn btn-success" title="Save"
+                                <a type="submit" name="Save" class="btn btn-success" id="btn-tambah-purchase-item" title="Save"
                                     onclick="processAddArrayPurchaseInvoice()"> Tambah</a>
                             </div>
                         </div>
@@ -763,7 +729,7 @@
                             <tr>
                                 <td colspan="2">Diskon (%)</td>
                                 <td style='text-align  : right !important;'>
-                                    <input type="text" style="text-align  : right !important;"
+                                    <input type="number" min="0" max="100" style="text-align  : right !important;"
                                         class="form-control input-bb" name="discount_percentage_total"
                                         id="discount_percentage_total" value="" autocomplete="off"
                                         onchange="final_total(this.name, this.value)" />
@@ -783,7 +749,7 @@
                             <tr>
                                 <td colspan="2">PPN (%)</td>
                                 <td style='text-align  : right !important;'>
-                                    <input type="text" style="text-align  : right !important;"
+                                    <input type="number" min="0" max="100" style="text-align  : right !important;"
                                         class="form-control input-bb" name="tax_ppn_percentage" id="tax_ppn_percentage"
                                         value="{{ $ppn_percentage['ppn_percentage'] }}" autocomplete="off"
                                         onchange="final_total(this.name, this.value)" />
@@ -862,7 +828,7 @@
                 <button type="reset" name="Reset" class="btn btn-danger" onclick="reset_add();"><i
                         class="fa fa-times"></i> Reset Data</button>
                 <button type="button" name="Save" class="btn btn-success"
-                    onclick="$(this).addClass('disabled');$('#form-invoice').submit();" title="Save"><i
+                    onclick="$(this).addClass('disabled');check();" title="Save"><i
                         class="fa fa-check"></i> Simpan</button>
             </div>
         </div>
