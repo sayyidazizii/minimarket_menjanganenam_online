@@ -16,11 +16,15 @@ class CoreMemberController extends Controller
     
     public function index()
     {
-        $data = CoreMember::select('*')
-        ->where('data_state',0)
-        ->where('company_id', Auth::user()->company_id)
+        $data = CoreMember::where('data_state',0)
+        ->where('branch_id', Auth::user()->company_id)
         ->get();
-
         return view('content.CoreMember.ListCoreMember', compact('data'));
+    }
+    public function print() {
+        // content
+    }
+    public function export() {
+        // content
     }
 }

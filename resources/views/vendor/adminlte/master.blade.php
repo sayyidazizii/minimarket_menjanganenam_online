@@ -177,16 +177,38 @@
     .select2-container--disabled {
         background-color: #bcbcbc;
     }
+    div.dataTables_processing div:not(.Loading-bar) {
+        display: none;
+    }
+
+    .Loading-bar {
+        height: 5px;
+        border-radius: 3px;
+        background: linear-gradient(90deg, #d8b407 0%, #d8b407 20%, #e05c03 20%, #e05c03 40%, #d8b407 40%, #d8b407 60%, #d8b407 60%, #d8b407 80%, #e05c03 80%, #e05c03 100%);
+        background-size: 200%;
+        animation: sliderigth 3s linear infinite;
+    }
+
+    @keyframes sliderigth {
+        0% {
+            background-position: 0% 0%
+        }
+
+        100% {
+            background-position: -200% 0%
+        }
+    }
 </style>
 
 <body class="@yield('classes_body')" @yield('body_data')>
     <div id="loading-widget" class="loading loading-widget mx-auto">
     </div>
-    <div class="modal fade" id="loading" data-backdrop="static" data-keyboard="false" tabindex="-1" aria-labelledby="loadingLabel" aria-hidden="true">
+    <div class="modal fade" id="loading" data-backdrop="static" data-bs-backdrop="static" data-keyboard="false" tabindex="-1" aria-labelledby="loadingLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-body ">
                 <div class="loading mx-auto">
             </div>
+            <div class="mt-5 pt-4 fs-4 remark text-center text-white" id="loading-remark"></div>
             </div>
         </div>
     </div>
@@ -285,7 +307,31 @@
                     // ]
                 });
                 $('#example').addClass('pull-left');
-
+                Object.assign(DataTable.defaults, {
+                    "pageLength": 5,
+                    'processing': true,
+                    "stateSave": true,
+                    "language": {
+                        "processing": "Loading Data<div class='Loading-bar mx-3'></div>",
+                        "emptyTable": "Data Kosong",
+                        "info": "Menampilkan data ke _START_ hingga _END_ dari total _TOTAL_ data",
+                        "infoEmpty": "Data Kosong. Menampilkan 0 Data",
+                        "infoFiltered": "(difilter dari _MAX_ total data)",
+                        "lengthMenu": "Tampilkan _MENU_ data",
+                        "zeroRecords": "Data Tidak Ditemukan",
+                        "paginate": {
+                            "first": "&#171;",
+                            "last": "&#187;",
+                            "next": "&#8250;",
+                            "previous": "&#8249;"
+                        },
+                    },
+                    "pagingType": "full_numbers",
+                    "lengthMenu": [
+                        [5, 10, 25, 50, 100, -1],
+                        [5, 10, 25, 50, 100, 'Semua']
+                    ],
+                });
             });
             $(document).ready(function() {
                 $('.selection-search-clear').select2({

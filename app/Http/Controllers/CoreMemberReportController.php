@@ -171,9 +171,8 @@ class CoreMemberReportController extends Controller
         } else {
             $end_date = Session::get('end_date');
         }
-        $data_member = CoreMember::select('member_name', 'member_id', 'division_name', 'member_no')
-        ->where('data_state',0)
-        ->where('company_id', Auth::user()->company_id)
+        $data_member = CoreMember::where('data_state',0)
+        ->where('branch_id', Auth::user()->company_id)
         ->get();
 
         $pdf = new TCPDF('L', PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
@@ -225,9 +224,6 @@ class CoreMemberReportController extends Controller
             <tr>
                 <td><div style=\"text-align: center; font-size:14px; font-weight: bold\">LAPORAN PIUTANG</div></td>
             </tr>
-            <tr>
-                <td><div style=\"text-align: center; font-size:12px\">PERIODE : ".date('d M Y', strtotime($start_date))." s.d. ".date('d M Y', strtotime($end_date))."</div></td>
-            </tr>
         </table>
         ";
         $pdf::writeHTML($tbl, true, false, false, false, '');
@@ -258,7 +254,7 @@ class CoreMemberReportController extends Controller
         foreach ($data_member as $key => $val) {
 
             $tblStock2 .="
-                <tr nobr=\"true\">			
+                <tr>			
                     <td style=\"text-align:center\">$no.</td>
                     <td style=\"text-align:left\">".$val['member_no']."</td>
                     <td style=\"text-align:left\">".$val['member_division_name']."</td>
@@ -277,7 +273,7 @@ class CoreMemberReportController extends Controller
             $TotalCredit += $this->getTotalCredit($val['member_id']);
         }
         $tblStock3 = " 
-        <tr nobr=\"true\">
+        <tr>
             <td colspan=\"4\"><div style=\"text-align: center;  font-weight: bold\">TOTAL</div></td>
             <td style=\"text-align: right\"><div style=\"font-weight: bold\">". $TotalTransaction ."</div></td>
             <td style=\"text-align: right\"><div style=\"font-weight: bold\">". $TotalItem ."</div></td>
@@ -304,9 +300,8 @@ class CoreMemberReportController extends Controller
         } else {
             $end_date = Session::get('end_date');
         }
-        $data_member = CoreMember::select('member_name', 'member_id', 'member_division_name', 'member_no')
-        ->where('data_state',0)
-        ->where('company_id', Auth::user()->company_id)
+        $data_member = CoreMember::where('data_state',0)
+        ->where('branch_id', Auth::user()->company_id)
         ->get();
 
         $spreadsheet = new Spreadsheet();

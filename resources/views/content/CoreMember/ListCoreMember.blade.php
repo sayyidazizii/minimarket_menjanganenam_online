@@ -1,4 +1,4 @@
-@extends('adminlte::page')
+  @extends('adminlte::page')
 
 @section('title', 'MOZAIC Minimarket')
 
@@ -64,6 +64,12 @@
             </table>
         </div>
     </div>
+    <div class="card-footer text-muted">
+      <div class="form-actions float-right">
+          <a class="btn btn-secondary" href="{{ url('core-member-report/print') }}"><i class="fa fa-file-pdf"></i> Pdf</a>
+          <a class="btn btn-dark" href="{{ url('core-member-report/export') }}"><i class="fa fa-download"></i> Export Data</a>
+      </div>
+  </div>
   </div>
 </div>
 
