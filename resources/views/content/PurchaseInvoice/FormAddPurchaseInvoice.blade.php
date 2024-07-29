@@ -652,7 +652,7 @@
             </div>
         </div>
     </div>
-    @dump($arraydatases)
+    {{-- @dump($arraydatases) --}}
     <div class="card border border-dark">
         <div class="card-header border-dark bg-dark">
             <h5 class="mb-0 float-left">
