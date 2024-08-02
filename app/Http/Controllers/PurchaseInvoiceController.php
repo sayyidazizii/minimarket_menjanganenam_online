@@ -150,6 +150,8 @@ class PurchaseInvoiceController extends Controller
         $arraydatases->put('item_unit_cost_after_ppn', ($request->item_unit_cost + ($request->item_unit_cost * $request->item_unit_ppn / 100)));
         $arraydatases->put('item_unit_ppn', $request->item_unit_ppn);
         $arraydatases->put('ppn_percentage_old', $request->ppn_percentage_old);
+        $arraydatases->put('ppn_percentage_item', $request->ppn_percentage_item);
+        $arraydatases->put('ppn_amount_item', $request->ppn_amount_item);
         $arraydatases->put('ppn_percentage_new', $request->ppn_percentage_new);
         $arraydatases->put('quantity', $request->quantity);
         $arraydatases->put('subtotal_amount', $request->subtotal_amount);
