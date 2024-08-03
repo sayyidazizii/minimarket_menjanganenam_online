@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class UpdateInvtItemTable extends Migration
+class UpdatePurchaseInvoiceItemTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,7 +13,7 @@ class UpdateInvtItemTable extends Migration
      */
     public function up()
     {
-        Schema::table('invt_item', function (Blueprint $table) {
+        Schema::table('purchase_invoice_item', function (Blueprint $table) {
             $table->string('tax_ppn_percentage_purchase',100)->nullable();
             $table->string('tax_ppn_percentage_sales',100)->nullable();
             $table->string('tax_ppn_amount_purchase',100)->nullable();
@@ -33,7 +33,7 @@ class UpdateInvtItemTable extends Migration
      */
     public function down()
     {
-        Schema::table('invt_item', function (Blueprint $table) {
+        Schema::table('purchase_invoice_item', function (Blueprint $table) {
             //
         });
     }
