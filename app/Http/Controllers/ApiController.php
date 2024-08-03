@@ -960,68 +960,68 @@ class ApiController extends Controller
             }
 
             //ACC Credit
-            foreach ($request->accCredit as $key => $val) {
-                // sales_invoice_id is important
+            // foreach ($request->accCredit as $key => $val) {
+            //     // sales_invoice_id is important
 
-                // AcctCreditAccount::insert($data);
-                DB::connection('mysql2')->table('ciptaprocpanel_kopkar_menjanganenam.acct_credits_account')
-                    ->insert([
-                        'branch_id'   =>  $val['branch_id'],
-                        'credits_id'   =>  $val['credits_id'],
-                        'member_id'   =>  $val['member_id'],
-                        'office_id'   =>  $val['office_id'],
-                        'payment_preference_id'   =>  $val['payment_preference_id'],
-                        'payment_type_id'   =>  $val['payment_type_id'],
-                        'credits_payment_period'   =>  $val['credits_payment_period'],
-                        'savings_account_id'   =>  $val['savings_account_id'],
-                        'source_fund_id'   =>  $val['source_fund_id'],
-                        'credits_account_date'   =>  $val['credits_account_date'],
-                        'credits_account_due_date'   =>  $val['credits_account_due_date'],
-                        'credits_account_period'   =>  $val['credits_account_period'],
-                        'credits_account_type'   =>  $val['credits_account_type'],
-                        'credits_account_payment_period'   =>  $val['credits_account_payment_period'],
-                        'credits_account_amount'   =>  $val['credits_account_amount'],
-                        'credits_account_interest'   =>  $val['credits_account_interest'],
-                        'credits_account_interest_1'   => $val['credits_account_interest_1'],
-                        'credits_account_interest_2'   =>  $val['credits_account_interest_2'],
-                        'credits_account_adm_cost'   => $val['credits_account_adm_cost'],
-                        'credits_account_provisi'   => $val['credits_account_provisi'],
-                        'credits_account_komisi'   =>  $val['credits_account_komisi'],
-                        'credits_account_insurance'   =>  $val['credits_account_insurance'],
-                        'credits_account_remark'   =>  $val['credits_account_remark'],
-                        'credits_account_bank_name'   => $val['credits_account_bank_name'],
-                        'credits_account_bank_account'   => $val['credits_account_bank_account'],
-                        'credits_account_bank_owner'   => $val['credits_account_bank_owner'],
-                        'credits_account_materai'   => $val['credits_account_materai'],
-                        'credits_account_risk_reserve'   => $val['credits_account_risk_reserve'],
-                        'credits_account_stash'   => $val['credits_account_stash'],
-                        'credits_account_special'   => $val['credits_account_special'],
-                        'credits_account_agunan'   => $val['credits_account_agunan'],
-                        'credits_account_notaris'   => $val['credits_account_notaris'],
-                        'credits_account_amount_received'   =>  $val['credits_account_amount_received'],
-                        'credits_account_principal_amount'   => $val['credits_account_principal_amount'],
-                        'credits_account_interest_amount'   => $val['credits_account_interest_amount'],
-                        'credits_account_payment_amount'   => $val['credits_account_payment_amount'],
-                        'credits_account_last_balance'   => $val['credits_account_last_balance'],
-                        'credits_account_interest_last_balance'   => $val['credits_account_interest_last_balance'],
-                        'credits_account_payment_to'   =>  $val['credits_account_payment_to'],
-                        'credits_account_payment_date'   =>   $val['credits_account_payment_date'],
-                        'credits_account_last_payment_date'   =>   $val['credits_account_last_payment_date'],
-                        'credits_account_accumulated_fines'   => $val['credits_account_accumulated_fines'],
-                        'credits_account_used'   => $val['credits_account_used'],
-                        'credits_account_status'   => $val['credits_account_status'],
-                        'credits_account_token'   => $val['credits_account_token'],
-                        'credits_account_last_number'   => $val['credits_account_last_number'],
-                        'credits_account_approve_status'   => $val['credits_account_approve_status'],
-                        'credits_account_reschedule_status'   => $val['credits_account_reschedule_status'],
-                        'credits_approve_status'   => $val['credits_approve_status'],
-                        'credits_account_temp_installment'   => $val['credits_account_temp_installment'],
-                        'auto_debet_credits_account_token'   => $val['auto_debet_credits_account_token'],
-                        'data_state'   => $val['data_state'],
-                        'created_id'   => $val['created_id'],
+            //     // AcctCreditAccount::insert($data);
+            //     DB::connection('mysql2')->table('ciptaprocpanel_kopkar_menjanganenam.acct_credits_account')
+            //         ->insert([
+            //             'branch_id'   =>  $val['branch_id'],
+            //             'credits_id'   =>  $val['credits_id'],
+            //             'member_id'   =>  $val['member_id'],
+            //             'office_id'   =>  $val['office_id'],
+            //             'payment_preference_id'   =>  $val['payment_preference_id'],
+            //             'payment_type_id'   =>  $val['payment_type_id'],
+            //             'credits_payment_period'   =>  $val['credits_payment_period'],
+            //             'savings_account_id'   =>  $val['savings_account_id'],
+            //             'source_fund_id'   =>  $val['source_fund_id'],
+            //             'credits_account_date'   =>  $val['credits_account_date'],
+            //             'credits_account_due_date'   =>  $val['credits_account_due_date'],
+            //             'credits_account_period'   =>  $val['credits_account_period'],
+            //             'credits_account_type'   =>  $val['credits_account_type'],
+            //             'credits_account_payment_period'   =>  $val['credits_account_payment_period'],
+            //             'credits_account_amount'   =>  $val['credits_account_amount'],
+            //             'credits_account_interest'   =>  $val['credits_account_interest'],
+            //             'credits_account_interest_1'   => $val['credits_account_interest_1'],
+            //             'credits_account_interest_2'   =>  $val['credits_account_interest_2'],
+            //             'credits_account_adm_cost'   => $val['credits_account_adm_cost'],
+            //             'credits_account_provisi'   => $val['credits_account_provisi'],
+            //             'credits_account_komisi'   =>  $val['credits_account_komisi'],
+            //             'credits_account_insurance'   =>  $val['credits_account_insurance'],
+            //             'credits_account_remark'   =>  $val['credits_account_remark'],
+            //             'credits_account_bank_name'   => $val['credits_account_bank_name'],
+            //             'credits_account_bank_account'   => $val['credits_account_bank_account'],
+            //             'credits_account_bank_owner'   => $val['credits_account_bank_owner'],
+            //             'credits_account_materai'   => $val['credits_account_materai'],
+            //             'credits_account_risk_reserve'   => $val['credits_account_risk_reserve'],
+            //             'credits_account_stash'   => $val['credits_account_stash'],
+            //             'credits_account_special'   => $val['credits_account_special'],
+            //             'credits_account_agunan'   => $val['credits_account_agunan'],
+            //             'credits_account_notaris'   => $val['credits_account_notaris'],
+            //             'credits_account_amount_received'   =>  $val['credits_account_amount_received'],
+            //             'credits_account_principal_amount'   => $val['credits_account_principal_amount'],
+            //             'credits_account_interest_amount'   => $val['credits_account_interest_amount'],
+            //             'credits_account_payment_amount'   => $val['credits_account_payment_amount'],
+            //             'credits_account_last_balance'   => $val['credits_account_last_balance'],
+            //             'credits_account_interest_last_balance'   => $val['credits_account_interest_last_balance'],
+            //             'credits_account_payment_to'   =>  $val['credits_account_payment_to'],
+            //             'credits_account_payment_date'   =>   $val['credits_account_payment_date'],
+            //             'credits_account_last_payment_date'   =>   $val['credits_account_last_payment_date'],
+            //             'credits_account_accumulated_fines'   => $val['credits_account_accumulated_fines'],
+            //             'credits_account_used'   => $val['credits_account_used'],
+            //             'credits_account_status'   => $val['credits_account_status'],
+            //             'credits_account_token'   => $val['credits_account_token'],
+            //             'credits_account_last_number'   => $val['credits_account_last_number'],
+            //             'credits_account_approve_status'   => $val['credits_account_approve_status'],
+            //             'credits_account_reschedule_status'   => $val['credits_account_reschedule_status'],
+            //             'credits_approve_status'   => $val['credits_approve_status'],
+            //             'credits_account_temp_installment'   => $val['credits_account_temp_installment'],
+            //             'auto_debet_credits_account_token'   => $val['auto_debet_credits_account_token'],
+            //             'data_state'   => $val['data_state'],
+            //             'created_id'   => $val['created_id'],
 
-                    ]);
-            }
+            //         ]);
+            // }
 
             //system login log
             foreach ($request->loginLog as $key => $val) {
@@ -1074,13 +1074,13 @@ class ApiController extends Controller
                 //Tipe beras
                 $bkp = SalesInvoiceItem::select('sales_invoice_item.*')
                     ->where('sales_invoice_id', $sales_invoice_id['sales_invoice_id'])
-                    ->where('bkp', 1)
+                    ->where('item_category_id', 1)
                     ->first();
 
                 //BKP Amount(beras)
                 $total_amount_bkp = SalesInvoiceItem::select('sales_invoice_item.*', DB::raw("SUM(sales_invoice_item.subtotal_amount_after_discount) as total_amount"))
                     ->where('sales_invoice_id', $sales_invoice_id['sales_invoice_id'])
-                    ->where('bkp', 1)
+                    ->where('item_category_id', 1)
                     ->first();
 
                 //harga Beli
@@ -1124,7 +1124,35 @@ class ApiController extends Controller
 
                 //jurnal Tunai BKP beras
                 if ($bkp && $val['sales_payment_method'] == 1) {
+                    //KAS
                     $account_setting_name   = 'sales_cash_account';
+                    $account_id             = $this->getAccountId($account_setting_name);
+                    $account_setting_status = $this->getAccountSettingStatus($account_setting_name);
+                    $account_default_status = $this->getAccountDefaultStatus($account_id);
+                    $journal_voucher_id     = JournalVoucher::orderBy('journal_voucher_id', 'DESC')->where('company_id', $val['company_id'])->first();
+                    if ($account_setting_status == 0) {
+                        $debit_amount   = $val['total_amount'];
+                        $credit_amount  = 0;
+                    } else {
+                        $debit_amount   = 0;
+                        $credit_amount  = $val['total_amount'];
+                    }
+                    $journal_debit = array(
+                        'company_id'                    => $val['company_id'],
+                        'journal_voucher_id'            => $journal_voucher_id['journal_voucher_id'],
+                        'account_id'                    => $account_id,
+                        'journal_voucher_amount'        => $val['total_amount'],
+                        'account_id_default_status'     => $account_default_status,
+                        'account_id_status'             => $account_setting_status,
+                        'journal_voucher_debit_amount'  => $debit_amount,
+                        'journal_voucher_credit_amount' => $credit_amount,
+                        'updated_id'                    => $val['updated_id'],
+                        'created_id'                    => $val['created_id']
+                    );
+                    JournalVoucherItem::create($journal_debit);
+
+                    //Piutang Qris
+                    $account_setting_name   = 'sales_cash_qris_account';
                     $account_id             = $this->getAccountId($account_setting_name);
                     $account_setting_status = $this->getAccountSettingStatus($account_setting_name);
                     $account_default_status = $this->getAccountDefaultStatus($account_id);
@@ -1179,7 +1207,7 @@ class ApiController extends Controller
                     JournalVoucherItem::create($journal_credit);
 
 
-                    //ppn bkp Tunai
+                    //PPN KELUARAN Tunai
                     $account_setting_name = 'sales_tax_out_account';
                     $account_id = $this->getAccountId($account_setting_name);
                     $account_setting_status = $this->getAccountSettingStatus($account_setting_name);
@@ -1850,8 +1878,6 @@ class ApiController extends Controller
                 CoreMember::where('member_id', $val['customer_id']);
                     // ->update(['member_account_receivable_amount_temp' => $datacoremember['member_account_receivable_amount_temp'] +  $val['total_amount'],]);
                 }
-
-
 
 
                 if ($val['data_state'] == 1) {
