@@ -61,6 +61,9 @@
             let quantity = $("#quantity").val();
             let discount_percentage = $("#discount_percentage").val();
             let discount_amount = $("#discount_amount").val();
+            let ppn_item_percentage = $("#ppn_item_percentage").val();
+            let ppn_item_amount = ($("#ppn_item").val()||0);
+            let tax_ppn_percentage_sales = ($("#tax_ppn_percentage_sales").val()||0);
             let subtotal_amount_after_discount = $("#subtotal_amount_after_discount").val();
             let subtotal_amount = $("#subtotal_amount").val();
             let item_expired_date = $("#item_expired_date").val();
@@ -80,7 +83,7 @@
                 alert('Harap Masukan Jumlah Pembelian Yang Valid !');
                 setTimeout(() => {
                     loadingWidget(0);
-                }, 200);
+                }, 250);
                 return 0;
             }
             // return profit_old;
@@ -99,6 +102,9 @@
                     'margin_percentage_new': margin_percentage,
                     'profit': profit,
                     'ppn_percentage_new':ppn,
+                    'ppn_amount_item':ppn_item_amount,
+                    'ppn_percentage_item':ppn_item_percentage,
+                    'tax_ppn_percentage_sales':tax_ppn_percentage_sales,
 
                     'item_packge_id': item_packge_id,
                     'quantity': quantity,
@@ -114,7 +120,7 @@
                 success: function(msg) {
                     setTimeout(() => {
                         loadingWidget(0);
-                    }, 200);
+                    }, 290);
                     location.reload();
                     console.log('uploaded');
                 }
@@ -328,7 +334,7 @@
     </h3>
     <br />
     @if (session('msg'))
-        <div class="alert alert-info" role="alert">
+        <div class="alert alert-{{ session('type') ?? 'info' }}" role="alert">
             {{ session('msg') }}
         </div>
     @endif
@@ -445,6 +451,7 @@
                                     {!! Form::select('item_packge_id', $items, 0, [
                                         'class' => 'form-control selection-search-clear select-form',
                                         'id' => 'item_packge_id',
+                                        'autocomplete' => 'off'
                                     ]) !!}
                                 </div>
                             </div>
@@ -478,7 +485,7 @@
                                         hidden />
                                 </div>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-3">
                                 <div class="form-group">
                                     <a class="text-dark">Subtotal<a class='red'> *</a></a>
                                     <input style="text-align: right" class="form-control input-bb"
@@ -490,10 +497,23 @@
                             </div>
                             <div class="col-md-3">
                                 <div class="form-group">
+                                    <a class="text-dark">Total<a class='red'> *</a></a>
+                                    <input style="text-align: right" class="form-control input-bb"
+                                        name="subtotal_amount_after_discount_view"
+                                        id="subtotal_amount_after_discount_view" type="text" autocomplete="off"
+                                        value="" disabled />
+                                    <input style="text-align: right" class="form-control input-bb"
+                                        name="subtotal_amount_after_discount" id="subtotal_amount_after_discount"
+                                        type="text" autocomplete="off" value="" hidden />
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-group">
                                     <a class="text-dark">Diskon (%)</a>
                                     <input style="text-align: right" class="form-control input-bb"
-                                        name="discount_percentage" id="1" type="number" min="0" max="100"
+                                        name="discount_percentage" id="discount_percentage" type="number" min="0" max="100"
                                         autocomplete="off" value="" />
+                                    <input name="og_discount_percentage" hidden id="og_discount_percentage" autocomplete="off" value="0" />
                                 </div>
                             </div>
                             <div class="col-md-3">
@@ -506,16 +526,44 @@
                                         id="discount_amount" type="text" autocomplete="off" value="" hidden />
                                 </div>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-3">
                                 <div class="form-group">
-                                    <a class="text-dark">Total<a class='red'> *</a></a>
+                                    <a class="text-dark">PPN (%)</a>
                                     <input style="text-align: right" class="form-control input-bb"
-                                        name="subtotal_amount_after_discount_view"
-                                        id="subtotal_amount_after_discount_view" type="text" autocomplete="off"
-                                        value="" disabled />
+                                        name="ppn_item_percentage" id="ppn_item_percentage" type="number" min="0" max="100"
+                                        autocomplete="off" value="" />
+                                        <input type="hidden" name="og_ppn_item_percentage" id="og_ppn_item_percentage" value="0">
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <a class="text-dark">Jumlah PPN</a>
+                                    <input style="text-align: right" readonly class="form-control input-bb"
+                                        name="ppn_item_view" id="ppn_item_view" type="text"
+                                        autocomplete="off" value="" />
+                                    <input style="text-align: right" class="form-control input-bb" name="ppn_item"
+                                        id="ppn_item" type="text" autocomplete="off" value="" hidden />
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <a class="text-dark">PPN Keluar (%)</a>
                                     <input style="text-align: right" class="form-control input-bb"
-                                        name="subtotal_amount_after_discount" id="subtotal_amount_after_discount"
+                                        name="tax_ppn_percentage_sales" id="tax_ppn_percentage_sales" type="number"
+                                        min="0" autocomplete="off" value="" />
+                                    <input name="tax_ppn_percentage_sales_old" id="tax_ppn_percentage_sales_old"
                                         type="text" autocomplete="off" value="" hidden />
+                                </div>
+                            </div>
+                            <div class="col-md-3 d-none">
+                                <div class="form-group">
+                                    <a class="text-dark">Jumlah PPN</a>
+                                    <input style="text-align: left" class="form-control input-bb"
+                                        name="tax_ppn_amount_purchase_view" id="tax_ppn_amount_purchase_view" readonly ="text"
+                                        min="0" autocomplete="off" value="" />
+                                    <input style="text-align: left" class="form-control input-bb"
+                                        name="tax_ppn_amount_purchase" id="tax_ppn_amount_purchase" type="text" autocomplete="off"
+                                        value="" hidden />
                                 </div>
                             </div>
                             <div class="col-md-2">
@@ -652,7 +700,9 @@
             </div>
         </div>
     </div>
-    {{-- @dump($arraydatases) --}}
+    @if (Auth::user()->isAdmin())
+        @dump($arraydatases)
+    @endif
     <div class="card border border-dark">
         <div class="card-header border-dark bg-dark">
             <h5 class="mb-0 float-left">
@@ -668,52 +718,55 @@
                                 <th style='text-align:center'>Barang</th>
                                 <th style='text-align:center'>Jumlah</th>
                                 <th style='text-align:center'>Harga Satuan</th>
+                                <th style='text-align:center'>Diskon</th>
+                                <th style='text-align:center'>PPN</th>
                                 <th style='text-align:center'>Subtotal</th>
                                 <th style='text-align:center'>Kadaluarsa</th>
                                 <th style='text-align:center'>Aksi</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <?php
+                            @php
                             $quantity = 0;
                             $subtotal_amount = 0;
-                                if(!is_array($arraydatases)){
-                                    echo "<tr><th colspan='6' style='text-align  : center !important;'>Data Kosong</th></tr>";
-                                } else {
-                                    foreach ($arraydatases AS $key => $val){
-                                        echo"
-                                        <tr>
-                                                    <td style='text-align  : left !important;'>".$PurchaseInvoice->getItemName($val['item_id'])."</td>
-                                                    <td style='text-align  : right !important;'>".$val['quantity']."</td>
-                                                    <td style='text-align  : right !important;'>".number_format($val['item_unit_cost'],2,',','.')."</td>
-                                                    <td style='text-align  : right !important;'>".number_format($val['subtotal_amount_after_discount'],2,',','.')."</td>
-                                                    <td style='text-align  : right !important;'>".date('d-m-Y', strtotime($val['item_expired_date']))."</td>";
-                                                    ?>
+                            @endphp
+                            @if(!is_array($arraydatases))
+                                <tr><th colspan='8' style='text-align  : center !important;'>Data Kosong</th></tr>
+                            @else
+                                @foreach ($arraydatases as $key => $val)
+                                    <tr>
+                                        <td style='text-align  : left !important;'>{{$PurchaseInvoice->getItemName($val['item_id'])}}</td>
+                                        <td style='text-align  : right !important;'>{{$val['quantity']}}</td>
+                                        <td style='text-align  : right !important;'>{{number_format($val['item_unit_cost'],2,',','.')}}</td>
+                                        <td style='text-align  : right !important;'>{{number_format($val['discount_amount'],2,',','.')}}({{$val['discount_percentage']}}%)</td>
+                                        <td style='text-align  : right !important;'><div class="mr-2 d-inline" data-toggle="tooltip" data-placement="top" title="Subtotal PPN Masuk"><i class="fa fa-thin fa-sm fa-arrow-down"></i> {{number_format($val['ppn_amount_item'],2,',','.')}}({{$val['ppn_percentage_item']}}%)</div>
+                                            @if ($val['tax_ppn_percentage_sales'])
+                                                <div class="d-inline fa-sm ml-2"  data-toggle="tooltip" data-placement="top" title="PPN Keluar Per Satu Item"><i class="fa fa-thin fa-arrow-up"></i> {{number_format(($val['item_unit_cost']*$val['tax_ppn_percentage_sales']/100),2,',','.')}}({{$val['tax_ppn_percentage_sales']}}%)</div>
+                                            @endif
+                                        </td>
+                                        <td style='text-align  : right !important;'>{{number_format($val['subtotal_amount_after_discount'],2,',','.')}}</td>
+                                        <td style='text-align  : right !important;'>{{date('d-m-Y', strtotime($val['item_expired_date']))}}</td>
+                                    <td style='text-align  : center'>
+                                        <a href="{{ route('delete-array-purchase-invoice', ['record_id' => $key]) }}"
+                                            name='Reset' class='btn btn-danger btn-sm'
+                                            onclick="return confirm('Apakah Anda Yakin Ingin Menghapus Data Ini ?')"></i> Hapus</a>
+                                    </td>
 
-                            <td style='text-align  : center'>
-                                <a href="{{ route('delete-array-purchase-invoice', ['record_id' => $key]) }}"
-                                    name='Reset' class='btn btn-danger btn-sm'
-                                    onclick="return confirm('Apakah Anda Yakin Ingin Menghapus Data Ini ?')"></i> Hapus</a>
-                            </td>
-
-                            <?php
-                                                    echo"
-                                                </tr>
-                                            ";
-
+                                    </tr>
+                                    @php
                                         $quantity += $val['quantity'];
                                         $subtotal_amount += $val['subtotal_amount_after_discount'];
-
-                                    }
-                                }
-                            ?>
+                                    @endphp
+                                @endforeach
+                            @endif
                             <tr>
-                                <td colspan="2">Sub Total</td>
+                                <td>Sub Total</td>
                                 <td style='text-align  : right !important;'>
                                     <input type="text" style="text-align  : right !important;"
                                         class="form-control input-bb" name="subtotal_item" id="subtotal_item"
                                         value="{{ $quantity }}" readonly />
                                 </td>
+                                <td colspan="3"></td>
                                 <td style='text-align  : right !important;'>
                                     <input type="text" style="text-align  : right !important;"
                                         class="form-control input-bb" name="subtotal_amount_total_view"
@@ -727,7 +780,7 @@
                                 <td></td>
                             </tr>
                             <tr>
-                                <td colspan="2">Diskon (%)</td>
+                                <td colspan="4">Diskon (%)</td>
                                 <td style='text-align  : right !important;'>
                                     <input type="number" min="0" max="100" style="text-align  : right !important;"
                                         class="form-control input-bb" name="discount_percentage_total"
@@ -747,7 +800,7 @@
                                 <td></td>
                             </tr>
                             <tr>
-                                <td colspan="2">PPN (%)</td>
+                                <td colspan="4">PPN (%)</td>
                                 <td style='text-align  : right !important;'>
                                     <input type="number" min="0" max="100" style="text-align  : right !important;"
                                         class="form-control input-bb" name="tax_ppn_percentage" id="tax_ppn_percentage"
@@ -766,7 +819,7 @@
                                 <td></td>
                             </tr>
                             <tr>
-                                <td colspan="3">Selisih</td>
+                                <td colspan="5">Selisih</td>
                                 <td style='text-align  : right !important;'>
                                     <input type="text" style="text-align  : right !important;"
                                         class="form-control input-bb" name="shortover_amount_view"
@@ -780,7 +833,7 @@
                                 <td></td>
                             </tr>
                             <tr>
-                                <td colspan="3">Jumlah Total</td>
+                                <td colspan="5">Jumlah Total</td>
                                 <td style='text-align  : right !important;'>
                                     <input type="text" style="text-align  : right !important;"
                                         class="form-control input-bb" name="total_amount_view" id="total_amount_view"
@@ -793,7 +846,7 @@
                                 <td></td>
                             </tr>
                             <tr>
-                                <td colspan="3">Di Bayar</td>
+                                <td colspan="5">Di Bayar</td>
                                 <td style='text-align  : right !important;'>
                                     <input type="text" style="text-align  : right !important;"
                                         class="form-control input-bb" name="paid_amount_view" id="paid_amount_view"
@@ -806,7 +859,7 @@
                                 <td></td>
                             </tr>
                             <tr>
-                                <td colspan="3">Hutang</td>
+                                <td colspan="5">Hutang</td>
                                 <td style='text-align  : right !important;'>
                                     <input type="text" style="text-align  : right !important;"
                                         class="form-control input-bb" name="owing_amount_view" id="owing_amount_view"

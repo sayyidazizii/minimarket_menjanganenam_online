@@ -107,7 +107,7 @@
 </div>
 <br/>
 @if(session('msg'))
-<div class="alert alert-info" role="alert">
+<div class="alert alert-{{ session('type') ?? 'info' }}" role="alert">
     {{session('msg')}}
 </div>
 @endif 

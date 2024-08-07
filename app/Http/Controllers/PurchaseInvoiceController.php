@@ -146,11 +146,12 @@ class PurchaseInvoiceController extends Controller
         $arraydatases->put('item_unit_id', $item_packge->item_unit_id);
         $arraydatases->put('item_unit_cost', $request->item_unit_cost);
         $arraydatases->put('item_unit_cost_final', $item_packge->item_unit_cost_final);
-        $arraydatases->put('item_unit_ppn_ori', $item_packge->item_unit_ppn);
-        $arraydatases->put('item_unit_cost_after_ppn', ($request->item_unit_cost + ($request->item_unit_cost * $request->item_unit_ppn / 100)));
-        $arraydatases->put('item_unit_ppn', $request->item_unit_ppn);
+        $arraydatases->put('item_unit_cost_after_ppn', ($request->item_unit_cost + ($request->item_unit_cost * $request->ppn_percentage_item / 100)));
         $arraydatases->put('ppn_percentage_old', $request->ppn_percentage_old);
         $arraydatases->put('ppn_percentage_item', $request->ppn_percentage_item);
+        $arraydatases->put('ppn_percentage_item_old', $item_packge->tax_ppn_percentage_purchase);
+        $arraydatases->put('tax_ppn_percentage_sales', $request->tax_ppn_percentage_sales);
+        $arraydatases->put('tax_ppn_percentage_sales_old', $item_packge->tax_ppn_percentage_sales);
         $arraydatases->put('ppn_amount_item', $request->ppn_amount_item);
         $arraydatases->put('ppn_percentage_new', $request->ppn_percentage_new);
         $arraydatases->put('quantity', $request->quantity);
@@ -225,6 +226,9 @@ class PurchaseInvoiceController extends Controller
     public function processAddPurchaseInvoice(Request $request)
     {
         // dd($request->all(),Session::get('arraydatases'));
+        if(empty(Session::get('arraydatases'))){
+            return redirect()->route('add-purchase-invoice')->error('Data Purchase Invoice Kosong!');
+        }
         try {
             DB::beginTransaction();
             $transaction_module_code = 'PBL';
@@ -353,7 +357,7 @@ class PurchaseInvoiceController extends Controller
 
                             'margin_percentage_old' => ($val['margin_percentage_old']??0),
                             'discount_percentage_old'   => ($lastdata->discount_percentage_new??0),
-                            'ppn_percentage_old'    => ($lastdata->ppn_percentage_new??$val['ppn_percentage_old']??0),
+                            'ppn_percentage_old'    => ($lastdata->ppn_percentage_new??0),
                             'discount_amount_old'   => ($lastdata->discount_amount_new??0),
                             'ppn_amount_old'    => ($lastdata->ppn_amount??0),
                             'item_cost_old' => ($val['item_unit_cost_ori']??0),
@@ -363,9 +367,9 @@ class PurchaseInvoiceController extends Controller
                             'margin_percentage_new'     => $val["margin_percentage_new"],
                             'profit_new'                => $val["profit"],
                             'discount_percentage_new'   => $val['discount_percentage'],
-                            'ppn_percentage_new'        => $val['ppn_percentage_new'],
-                            'discount_amount_new'       => $val['discount_amount_new'],
-                            'ppn_amount_new'            => $val['discount_amount'],
+                            'ppn_percentage_new'        => json_encode(['purchse'=>$val['ppn_percentage_item'],'sales'=>$val['tax_ppn_percentage_sales']]),
+                            'discount_amount_new'       => $val['discount_amount'],
+                            'ppn_amount_new'            => ($val['item_cost_new']*$val['ppn_percentage_item']/100),
                             'item_cost_new'             => $val['item_cost_new'],
                             'item_price_new'            => $val['item_price_new'],
 
@@ -375,11 +379,12 @@ class PurchaseInvoiceController extends Controller
                             'remark'    => $val['remark'],
                             'created_id' => Auth::id()
                         ]);
-                        $table->item_unit_ppn         = $request->tax_ppn_percentage;
-                        $table->item_unit_discount    = $val['discount_percentage'];
+                        $table->tax_ppn_percentage_purchase     = $val['ppn_percentage_item'];
+                        $table->tax_ppn_amount_purchase     = ($val['item_cost_new']*$val['ppn_percentage_item']/100);
+                        $table->discount_percentage_purchase    = $val['discount_percentage'];
+                        $table->tax_ppn_percentage_sales     = $val['tax_ppn_percentage_sales'];
                         $und = $val['item_cost_new']* $val['discount_percentage']/100;
-                        $unp = $val['item_cost_new']*$request->tax_ppn_percentage/100;
-                        $table->item_unit_cost_after_ppn = ($val['item_cost_new']+$unp);
+                        $unp =($val['item_cost_new']*$val['ppn_percentage_item']/100);
                         $table->item_unit_cost_final  = ($val['item_cost_new']-$und+$unp);
                         $table->margin_percentage     = $val['margin_percentage_new'];
                         $table->item_unit_cost        = $val['item_cost_new'];
@@ -395,6 +400,11 @@ class PurchaseInvoiceController extends Controller
                     }
                 }
 
+
+                /** * Keterangan Variable
+                 * * ppn_percentage_item = ppn masuk (%)
+                 * * tax_ppn_percentage_sales = ppn keluar (%)
+                 */
                 if ($fields['purchase_payment_method'] == 1) {
 
                     $account_setting_name = 'purchase_payable_account';
@@ -538,7 +548,7 @@ class PurchaseInvoiceController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             report($e);
-            dd($e);
+            dd($request->all(),$arraydatases,$e);
             $msg = 'Tambah Pembelian Gagal';
             return redirect('/purchase-invoice/add')->with('msg', $msg);
         }
@@ -1197,7 +1207,7 @@ class PurchaseInvoiceController extends Controller
     {
         $lastdatases = collect(Session::get('arraydatases'));
         $initem = 0;
-        $item_packge = InvtItemPackge::with('item')->find($item_packge_id);
+        $item_packge = InvtItemPackge::with('item','category')->find($item_packge_id);
         $cost =  $item_packge['item_unit_cost'];
         $costchanged =  false;
         // * when item already on list
@@ -1212,6 +1222,16 @@ class PurchaseInvoiceController extends Controller
             $cost =  $item_packge['item_unit_cost'];
         }
 
-        return response()->json(['initem' => $initem, 'costchanged' => $costchanged, 'data' => $lastdatases, "item_unit_discount" => $item_packge->item_unit_discount ?? 0, 'cost' => $item_packge['item_unit_cost']]);
+        return response()->json([
+            'initem' => $initem, 
+            'costchanged' => $costchanged, 
+            'data' => $lastdatases, 
+            "discount_percentage_sales" => ($item_packge->discount_percentage_sales ?? 0),
+            "tax_ppn_percentage_sales" => ($item_packge->tax_ppn_percentage_sales ?? 0),
+            "discount_percentage_purchase" => ($item_packge->discount_percentage_purchase ?? 0),
+            "tax_ppn_percentage_purchase" => ($item_packge->tax_ppn_percentage_purchase ?? 0),
+            'margin_percentage'=>$item_packge->category->margin_percentage, 
+            'cost' => $item_packge['item_unit_cost'], 
+            'price' => $item_packge['item_unit_price']]);
     }
 }

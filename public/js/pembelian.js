@@ -1,4 +1,9 @@
 $(function () {
+    // start tooltip
+    $(function () {
+        $('[data-toggle="tooltip"]').tooltip()
+      })
+      
     $("#reload-price-ico").hide();
     $("#item_packge_id").select2("val", "0");
     // ** ↓ Tambah Barang ke daftar ↓ **
@@ -22,7 +27,19 @@ $(function () {
                     $('#item_unit_cost').val(data.cost);
                     $('#item_unit_cost_view').val(toRp(data.cost));
                     $('#item_unit_cost_old').val(data.cost);
+                    $('#item_cost_old_view').val(toRp(data.cost));
+                    $('#item_cost_old').val(data.cost);
                     $("#item_unit_cost_ori").val(data.cost);
+                    $("#item_price_old_view").val(toRp(data.price));
+                    $("#item_price_old").val(data.price);
+                    $("#margin_percentage").val(data.margin_percentage);
+                    $("#margin_percentage_old").val(data.margin_percentage);
+                    $("#og_discount_percentage").val((data.discount_percentage_sales));
+                    $("#discount_percentage").val((data.discount_percentage_sales));
+                    $("#og_ppn_item_percentage").val((data.tax_ppn_percentage_purchase));
+                    $("#ppn_item_percentage").val((data.tax_ppn_percentage_purchase));
+                    $("#tax_ppn_percentage_sales").val((data.tax_ppn_percentage_sales));
+                    $("#tax_ppn_percentage_sales_old").val((data.tax_ppn_percentage_sales));
                     if(data.initem){
                         if(data.costchanged){
                             $('#alert-cost-changed').show();
@@ -32,12 +49,18 @@ $(function () {
                             $('#item_unit_cost_view').val(toRp(data.data.item_unit_cost));
                         }
                         $('#alert-exists').show();
+                        $("#ppn_item_percentage").val((data.data.ppn_percentage_item));
+                        $("#tax_ppn_percentage_sales").val((data.data.tax_ppn_percentage_sales));
+                        $("#margin_percentage").val((data.data.margin_percentage_new));
                         $('#discount_percentage').val(data.data.discount_percentage);
                     }else{
                         $('#alert-cost-changed').hide();
                         $('#alert-exists').hide();
                         // $('#discount_percentage').val(data.item_unit_discount);
                     }
+                    calcPurchase();
+                    costChanged();
+                    checkIfCostIsChaged();
                     setTimeout(() => {
                         enableButton();
                         loadingWidget(0);
@@ -82,44 +105,11 @@ $(function () {
         let cost = $("#item_unit_cost").val();
         let cost_old = $("#item_unit_cost_ori").val();
         let cost_now = $(this).val();
+        calcPurchase();
+        costChanged();
+        checkIfCostIsChaged();
         $('#item_unit_cost').val(this.value);
         $('#item_unit_cost_view').val(toRp(this.value));
-        if(checkIfCostIsChaged()){
-            $.ajax({
-                url: route("select-item-price") + "/" + item_packge_id,
-                type: "GET",
-                dataType: "html",
-                success: function (price) {
-                    if (price != "") {
-                        if (cost != cost_new) {
-                            $.ajax({
-                                url:route("get-margin-category") +"/" +item_packge_id,
-                                type: "GET",
-                                dataType: "html",
-                                success: function (margin) {
-                                    if (margin != "") {
-                                        $("#margin_percentage").val(margin);
-                                        $("#margin_percentage_old").val(margin);
-                                        var price_new =parseInt(cost_new) + (parseInt(cost_new) * margin) / 100;
-                                        $("#item_price_new_view").val(toRp(price_new));
-                                        $("#item_price_new").val(price_new);
-                                    }
-                                },
-                            });
-                            if(parseInt(cost_now)!=parseInt($("#item_unit_cost_ori").val())){
-                                            $("#modal").modal("show");
-                                            $("#item_price_old_view").val(toRp(price));
-                                            $("#item_cost_old_view").val(toRp(cost_old));
-                                            $("#item_cost_new_view").val(toRp(cost_new));
-                                            $("#item_price_old").val(price);
-                                            $("#item_cost_old").val(cost_old);
-                                            $("#item_cost_new").val(cost_new);
-                            }
-                        }
-                    }
-                },
-            });
-        }
         calcPurchase();
     });
     $('#purchase_invoice_due_day').change(function() {
@@ -170,6 +160,11 @@ $(function () {
         costChanged();
         checkIfCostIsChaged();
     });
+    $("#ppn_item_percentage").change(function() {
+        calcPurchase();
+        costChanged();
+        checkIfCostIsChaged();
+    });
 
     $("#discount_amount_view").change(function() {
         calcDiscountPercentagePurchase();
@@ -205,11 +200,9 @@ $(function () {
         calcModalMargin();
     });
     $('#item_price_new_view').change(function() {
-        let price_new = parseInt($('#item_price_new_view').val());
-        let cost_new = parseInt($('#item_cost_new').val());
-        let margin_old = parseInt($('#margin_percentage_old').val());
-        let margin = parseInt($('#margin_percentage').val());
-        let margin_percentage = ((price_new - cost_new) / cost_new) * 100;
+        let price_new = parseFloat($('#item_price_new_view').val());
+        let cost_new = parseFloat($('#item_cost_new').val());
+        let margin_percentage = (((price_new - cost_new) / cost_new) * 100);
         console.log(price_new);
         // if (margin_percentage > 100) {
         //     alert('Margin tidak boleh melebihi 100%');
@@ -237,11 +230,16 @@ function resetCostChanged() {
     $("#item_unit_cost_view").val(number_format($("#item_unit_cost_ori").val()));
     $("#item_unit_cost").val($("#item_unit_cost_ori").val());
     $("#cost_is_changed").val(0);
+    $('#ppn_item_percentage').val($('#og_ppn_item_percentage').val());
+    $('#discount_percentage').val($('#og_discount_percentage').val());
+    calcPurchase();
+    calcModalMargin();
 }
 function costChanged() {
     $("#reload-price-ico").show();
     $("#change-price-view").show();
     $("#cost_is_changed").val(1);
+    calcModalMargin();
 }
 function disableButton() {
     $("#btn-tambah-purchase-item").addClass('disabled');
@@ -291,30 +289,36 @@ function calcMarginPercentage() {
     $("#item_price_new").val(price_new);
     $("#margin_percentage").val(numberFormat(margin));
 }
-function calcModalWithoutMargin() {
-    let dscprcn = $("#disc_change_modal_percentage").val();
-}
-function calcModalWithoutMargin() {
-    let dscprcn = $("#disc_change_modal_percentage").val();
-}
 function calcPurchase() {
     let cost = parseFloat($("#item_unit_cost").val()) || 0;
     let qtyitm = parseFloat($("#quantity").val()) || 0;
     $("#subtotal_amount_view").val(numberFormat(cost * qtyitm));
     $("#subtotal_amount").val(cost * qtyitm);
     calcDiscountAmountPurchase();
+    calcPpnAmountPurchase();
     let discountAmount = parseFloat($("#discount_amount").val());
-    let total = parseFloat($("#subtotal_amount").val()) - discountAmount;
+    let ppnAmount = parseFloat($("#ppn_item").val());
+    let total = parseFloat($("#subtotal_amount").val()) + ppnAmount - discountAmount;
     $("#subtotal_amount_after_discount_view").val(numberFormat(total));
     $("#subtotal_amount_after_discount").val(total);
 }
 function calcDiscountAmountPurchase() {
-    let subtotal = parseFloat($("#subtotal_amount").val());
+    let subtotal = parseFloat(($("#subtotal_amount").val()||0));
     let discount_percentage = parseFloat($("#discount_percentage").val()) || 0;
     let discount_amount = (subtotal * discount_percentage) / 100;
     $("#discount_amount_view").val(numberFormat(discount_amount));
     $("#discount_amount").val(discount_amount);
     let total_amount = subtotal - discount_amount;
+    $("#subtotal_amount_after_discount_view").val(numberFormat(total_amount));
+    $("#subtotal_amount_after_discount").val(total_amount);
+}
+function calcPpnAmountPurchase() {
+    let subtotal = parseFloat($("#subtotal_amount").val());
+    let ppnitm = parseFloat($("#ppn_item_percentage").val()) || 0;
+    let ppnitmamn = (subtotal * ppnitm) / 100;
+    $("#ppn_item_view").val(numberFormat(ppnitmamn));
+    $("#ppn_item").val(ppnitmamn);
+    let total_amount = subtotal + discount_amount;
     $("#subtotal_amount_after_discount_view").val(numberFormat(total_amount));
     $("#subtotal_amount_after_discount").val(total_amount);
 }
@@ -331,9 +335,14 @@ function calcDiscountPercentagePurchase() {
 }
 function checkIfCostIsChaged() { 
     let dscPrcn = $('#discount_percentage').val();
+    let ogdscPrcn = $('#og_discount_percentage').val();
+    let ppnPrcn = $('#ppn_item_percentage').val();
+    let ogppnPrcn = $('#og_ppn_item_percentage').val();
     let unitCost = $('#item_unit_cost').val();
     let ogUnitCost = $('#item_unit_cost_ori').val();
-    if((dscPrcn == "" ||dscPrcn == 0 || dscPrcn == undefined)&&(unitCost==ogUnitCost)){
+    $('#item_cost_new_view').val(toRp(unitCost));
+    $('#item_cost_new').val(unitCost);
+    if((dscPrcn == ogdscPrcn)&&(unitCost==ogUnitCost)&&(ppnPrcn==ogppnPrcn)){
         resetCostChanged();
         return false;
     }else{
@@ -343,21 +352,21 @@ function checkIfCostIsChaged() {
  }
  function calcModalWithoutMargin() {
     let dscprcn = $("#disc_change_modal_percentage").val();
-    let ppn =   (parseFloat($("#item_cost_old").val()) *
-            parseFloat($("#tax_ppn_percentage").val())) /
-        100;
-    let disc =
-        (parseFloat($("#item_cost_old").val() || 0) *
-            parseFloat(dscprcn || 0)) /
-        100;
+    // let ppn =   (parseFloat($("#item_cost_old").val()) *
+    //         parseFloat($("#tax_ppn_percentage").val())) /
+    //     100;
+    // let disc =
+    //     (parseFloat($("#item_cost_old").val() || 0) *
+    //         parseFloat(dscprcn || 0)) /
+    //     100;
     let cost = parseFloat($("#item_cost_new").val()||0);
-    $("#ppn_change_modal_percentage").val(
-        ppn + " (" + $("#tax_ppn_percentage").val() + "%)"
-    );
-    $("#discount_change_modal_percentage").val(
-        disc + " (" + dscprcn + "%)"
-    );
-    let sbs = cost + ppn - disc;
+    // $("#ppn_change_modal_percentage").val(
+    //     ppn + " (" + $("#tax_ppn_percentage").val() + "%)"
+    // );
+    // $("#discount_change_modal_percentage").val(
+    //     disc + " (" + dscprcn + "%)"
+    // );
+    let sbs = cost;
     $("#item_price_new_before_profit").val(sbs);
     return sbs;
 }
