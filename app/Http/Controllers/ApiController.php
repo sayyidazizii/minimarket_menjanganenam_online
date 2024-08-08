@@ -32,6 +32,8 @@ use App\Models\SystemUserGroup;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
+
 
 class ApiController extends Controller
 {
@@ -1037,19 +1039,19 @@ class ApiController extends Controller
                 SystemLoginLog::insert($data);
             }
             //core member & core member kopkar
-            // foreach ($request->member as $key => $val) {
-            //     $data_member = CoreMember::where('member_no', $val['member_no'])
-            //         ->first();
+            foreach ($request->member as $key => $val) {
+                $data_member = CoreMember::where('member_no', $val['member_no'])
+                    ->first();
 
-            //     CoreMember::where('member_no', $val['member_no'])
-            //         ->update(['member_account_receivable_amount' => $data_member['member_account_receivable_amount'] + $val['member_account_receivable_amount_temp']]);
+                CoreMember::where('member_no', $val['member_no'])
+                    ->update(['member_account_receivable_amount' => $data_member['member_account_receivable_amount'] + $val['member_account_receivable_amount_temp']]);
 
-            //     $data_member = CoreMemberKopkar::where('member_no', $val['member_no'])
-            //         ->first();
+                $data_member = CoreMemberKopkar::where('member_no', $val['member_no'])
+                    ->first();
 
-            //     CoreMemberKopkar::where('member_no', $val['member_no'])
-            //         ->update(['member_account_receivable_amount' => $data_member['member_account_receivable_amount'] + $val['member_account_receivable_amount_temp'], 'member_account_credits_store_debt' => $data_member['member_account_credits_store_debt'] + $val['member_account_receivable_amount_temp']]);
-            // }
+                CoreMemberKopkar::where('member_no', $val['member_no'])
+                    ->update(['member_account_receivable_amount' => $data_member['member_account_receivable_amount'] + $val['member_account_receivable_amount_temp'], 'member_account_credits_store_debt' => $data_member['member_account_credits_store_debt'] + $val['member_account_receivable_amount_temp']]);
+            }
 
 
             //journal voucher
@@ -1066,817 +1068,1514 @@ class ApiController extends Controller
                 //---------------------------------------END UPDATE SALES INV ITEM -------------------------------//
 
                  //--------------------------------------- GET Amount -------------------------------//
-                // ppn Amount
-                $ppnAmount = SalesInvoiceItem::select('*', DB::raw("SUM(sales_invoice_item.sales_tax_amount) as total_tax_amount"))
+                    //total harga jual
+                    $priceAmount = SalesInvoiceItem::select(DB::raw("SUM(sales_invoice_item.item_unit_price) as total_price_amount"))
                     ->where('sales_invoice_item.sales_invoice_id', $sales_invoice_id['sales_invoice_id'])
                     ->first();
 
-                //Tipe beras
-                $bkp = SalesInvoiceItem::select('sales_invoice_item.*')
-                    ->where('sales_invoice_id', $sales_invoice_id['sales_invoice_id'])
-                    ->where('item_category_id', 1)
+                    //total ppn
+                    $ppnAmount = SalesInvoiceItem::select(DB::raw("SUM(sales_invoice_item.sales_tax_amount) as total_tax_amount"))
+                    ->where('sales_invoice_item.sales_invoice_id', $sales_invoice_id['sales_invoice_id'])
                     ->first();
 
-                //BKP Amount(beras)
-                $total_amount_bkp = SalesInvoiceItem::select('sales_invoice_item.*', DB::raw("SUM(sales_invoice_item.subtotal_amount_after_discount) as total_amount"))
-                    ->where('sales_invoice_id', $sales_invoice_id['sales_invoice_id'])
-                    ->where('item_category_id', 1)
+                    //total harga beli
+                    $hppAmount = SalesInvoiceItem::select(DB::raw("SUM(sales_invoice_item.item_unit_cost) as total_hpp_amount"))
+                    ->where('sales_invoice_item.sales_invoice_id', $sales_invoice_id['sales_invoice_id'])
                     ->first();
+                 //--------------------------------------- END GET Amount -------------------------------//
+                    // BKP, NON BKP, and Pulsa
+                    $items = SalesInvoiceItem::where('sales_invoice_id', $sales_invoice_id['sales_invoice_id'])
+                    ->get()
+                    ->keyBy('item_category_id');
 
-                //harga Beli
-                $total_unit_cost = SalesInvoiceItem::select('sales_invoice_item.*', DB::raw("SUM(sales_invoice_item.item_unit_cost) as total_unit_cost"))
-                ->where('sales_invoice_id', $sales_invoice_id['sales_invoice_id'])
-                ->first();
-                //--------------------------------------- END GET Amount -------------------------------//
+                    // BKP Amount
+                    $total_amount_bkp = $items->has(1) ? $items[1]->subtotal_amount_after_discount : 0;
 
+                    // Journal Voucher Description
+                    $journal_voucher_description = '';
 
-                if ($bkp && $val['sales_payment_method'] == 1) {
-                    $journal_voucher_description  = 'Penjualan Tunai BKP';
-                } elseif ($bkp && $val['sales_payment_method'] == 2) {
-                    $journal_voucher_description  = 'Penjualan Kredit BKP';
-                } elseif ($val['sales_payment_method'] == 6) {
-                    $journal_voucher_description  = 'Penjualan Konsinyasi';
-                } elseif(empty($bkp) && $val['sales_payment_method'] == 1) {
-                    $journal_voucher_description  = 'Penjualan Tunai Non BKP';
-                }elseif(empty($bkp) && $val['sales_payment_method'] == 2) {
-                    $journal_voucher_description  = 'Penjualan Kredit Non BKP';
-                }else{
-                    $journal_voucher_description  = 'Penjualan';
-                }
-                $transaction_module_code    = 'PJL';
-                $transaction_module_id      = $this->getTransactionModuleID($transaction_module_code);
+                    switch ($val['sales_payment_method']) {
+                    case 1:
+                        if (isset($items[1])) {
+                            $journal_voucher_description = 'Penjualan Tunai - BKP';
+                        } elseif (isset($items[2])) {
+                            $journal_voucher_description = 'Penjualan Tunai - Non BKP';
+                        } elseif (isset($items[3])) {
+                            $journal_voucher_description = 'Penjualan Pulsa Handphone Tunai';
+                        }
+                        break;
+                    case 2:
+                        if (isset($items[1])) {
+                            $journal_voucher_description = 'Penjualan Kredit - BKP';
+                        } elseif (isset($items[2])) {
+                            $journal_voucher_description = 'Penjualan Kredit - Non BKP';
+                        } elseif (isset($items[3])) {
+                            $journal_voucher_description = 'Penjualan Pulsa Handphone Kredit';
+                        }
+                        break;
+                    case 3:
+                    case 4:
+                        $journal_voucher_description = 'Penjualan Kredit - Non BKP';
+                        break;
+                    case 6:
+                        $journal_voucher_description = 'Penjualan Konsinyasi';
+                        break;
+                    }
 
-                $data_journal = array(
+                $transaction_module_code = 'PJL';
+                $transaction_module_id  = $this->getTransactionModuleID($transaction_module_code);
+                $journal = array(
                     'company_id'                    => $val['company_id'],
                     'journal_voucher_status'        => 1,
-                    'journal_voucher_description'   => $journal_voucher_description,
+                    'journal_voucher_description'   => $journal_voucher_description." - " .$sales_invoice_id['sales_invoice_no'],
                     'journal_voucher_title'         => $this->getTransactionModuleName($transaction_module_code),
                     'transaction_module_id'         => $transaction_module_id,
                     'transaction_module_code'       => $transaction_module_code,
                     'journal_voucher_date'          => $val['sales_invoice_date'],
-                    'transaction_journal_no'        => $val['sales_invoice_no'],
-                    'journal_voucher_period'        => date('Ym', strtotime($val['sales_invoice_date'])),
-                    'journal_voucher_segment'       => 2,
-                    'updated_id'                    => $val['updated_id'],
-                    'created_id'                    => $val['created_id']
+                    'transaction_journal_no'        => $sales_invoice_id['sales_invoice_no'],
+                    'journal_voucher_period'        => date('Ym'),
+                    'updated_id'                    => Auth::id(),
+                    'created_id'                    => Auth::id()
                 );
-                JournalVoucher::create($data_journal);
 
-                //jurnal Tunai BKP beras
-                if ($bkp && $val['sales_payment_method'] == 1) {
-                    //KAS
-                    $account_setting_name   = 'sales_cash_account';
-                    $account_id             = $this->getAccountId($account_setting_name);
-                    $account_setting_status = $this->getAccountSettingStatus($account_setting_name);
-                    $account_default_status = $this->getAccountDefaultStatus($account_id);
-                    $journal_voucher_id     = JournalVoucher::orderBy('journal_voucher_id', 'DESC')->where('company_id', $val['company_id'])->first();
-                    if ($account_setting_status == 0) {
-                        $debit_amount   = $val['total_amount'];
-                        $credit_amount  = 0;
-                    } else {
-                        $debit_amount   = 0;
-                        $credit_amount  = $val['total_amount'];
+                JournalVoucher::create($journal);
+
+                //------------------------------------------------------ JOURNAL VOUCHER ITEM ----------------------------------------------------------//
+            
+                switch ($val['sales_payment_method']) {
+                    case 1: //Tunai
+                    //Jurnal Tunai BKP 
+                    if (isset($items[1])) {
+                        //KAS
+                        $account_setting_name = 'sales_cash_account';
+                        $account_id = $this->getAccountId($account_setting_name);
+                        $account_setting_status = $this->getAccountSettingStatus($account_setting_name);
+                        $account_default_status = $this->getAccountDefaultStatus($account_id);
+                        $journal_voucher_id = JournalVoucher::orderBy('created_at', 'DESC')->where('company_id', $val['company_id'])->first();
+                        if($request->qris == true){
+                            if ($account_setting_status == 0) {
+                                $debit_amount = $val['total_amount'] - $val['total_amount'];
+                                $credit_amount = 0;
+                            } else {
+                                $debit_amount = 0;
+                                $credit_amount = $val['total_amount'] - $val['total_amount'];
+                            }
+                            $journal_debit = array(
+                                'company_id'                    => $val['company_id'],
+                                'journal_voucher_id'            => $journal_voucher_id['journal_voucher_id'],
+                                'account_id'                    => $account_id,
+                                'journal_voucher_amount'        => 0,
+                                'account_id_default_status'     => $account_default_status,
+                                'account_id_status'             => $account_setting_status,
+                                'journal_voucher_debit_amount'  => $debit_amount,
+                                'journal_voucher_credit_amount' => $credit_amount,
+                                'updated_id'                    => Auth::id(),
+                                'created_id'                    => Auth::id()
+                            );
+                            JournalVoucherItem::create($journal_debit);
+                        }else{
+                            if ($account_setting_status == 0) {
+                                $debit_amount = $val['total_amount'];
+                                $credit_amount = 0;
+                            } else {
+                                $debit_amount = 0;
+                                $credit_amount = $val['total_amount'];
+                            }
+                            $journal_debit = array(
+                                'company_id'                    => $val['company_id'],
+                                'journal_voucher_id'            => $journal_voucher_id['journal_voucher_id'],
+                                'account_id'                    => $account_id,
+                                'journal_voucher_amount'        => $val['total_amount'],
+                                'account_id_default_status'     => $account_default_status,
+                                'account_id_status'             => $account_setting_status,
+                                'journal_voucher_debit_amount'  => $debit_amount,
+                                'journal_voucher_credit_amount' => $credit_amount,
+                                'updated_id'                    => Auth::id(),
+                                'created_id'                    => Auth::id()
+                            );
+                            JournalVoucherItem::create($journal_debit);
+                        }
+
+                        //Piutang Qris
+                        $account_setting_name = 'sales_cash_qris_account';
+                        $account_id = $this->getAccountId($account_setting_name);
+                        $account_setting_status = $this->getAccountSettingStatus($account_setting_name);
+                        $account_default_status = $this->getAccountDefaultStatus($account_id);
+                        $journal_voucher_id = JournalVoucher::orderBy('created_at', 'DESC')->where('company_id', $val['company_id'])->first();
+                        
+                        if($request->qris == true){
+                            if ($account_setting_status == 0) {
+                                $debit_amount = $val['total_amount'];
+                                $credit_amount = 0;
+                            } else {
+                                $debit_amount = 0;
+                                $credit_amount = $val['total_amount'];
+                            }
+                            $journal_debit = array(
+                                'company_id'                    => $val['company_id'],
+                                'journal_voucher_id'            => $journal_voucher_id['journal_voucher_id'],
+                                'account_id'                    => $account_id,
+                                'journal_voucher_amount'        => $val['total_amount'],
+                                'account_id_default_status'     => $account_default_status,
+                                'account_id_status'             => $account_setting_status,
+                                'journal_voucher_debit_amount'  => $debit_amount,
+                                'journal_voucher_credit_amount' => $credit_amount,
+                                'updated_id'                    => Auth::id(),
+                                'created_id'                    => Auth::id()
+                            );
+                            JournalVoucherItem::create($journal_debit);
+
+                        }else{
+                            if ($account_setting_status == 0) {
+                                $debit_amount = $val['total_amount'] - $val['total_amount'];
+                                $credit_amount = 0;
+                            } else {
+                                $debit_amount = 0;
+                                $credit_amount = $val['total_amount'] - $val['total_amount'];
+                            }
+                            $journal_debit = array(
+                                'company_id'                    => $val['company_id'],
+                                'journal_voucher_id'            => $journal_voucher_id['journal_voucher_id'],
+                                'account_id'                    => $account_id,
+                                'journal_voucher_amount'        => 0,
+                                'account_id_default_status'     => $account_default_status,
+                                'account_id_status'             => $account_setting_status,
+                                'journal_voucher_debit_amount'  => $debit_amount,
+                                'journal_voucher_credit_amount' => $credit_amount,
+                                'updated_id'                    => Auth::id(),
+                                'created_id'                    => Auth::id()
+                            );
+                            JournalVoucherItem::create($journal_debit);
+                        }
+
+                        //Penjualan Brg Dagang BKP Tunai
+                        $account_setting_name = 'sales_receivable_bkp_account';
+                        $account_id = $this->getAccountId($account_setting_name);
+                        $account_setting_status = $this->getAccountSettingStatus($account_setting_name);
+                        $account_default_status = $this->getAccountDefaultStatus($account_id);
+                        $journal_voucher_id = JournalVoucher::orderBy('created_at', 'DESC')->where('company_id', $val['company_id'])->first();
+                        if ($account_setting_status == 0) {
+                            $debit_amount = $priceAmount['total_price_amount'] - $ppnAmount['total_tax_amount'];
+                            $credit_amount = 0;
+                        } else {
+                            $debit_amount = 0;
+                            $credit_amount = $priceAmount['total_price_amount'] - $ppnAmount['total_tax_amount'];
+                        }
+                        $journal_credit = array(
+                            'company_id'                    => $val['company_id'],
+                            'journal_voucher_id'            => $journal_voucher_id['journal_voucher_id'],
+                            'account_id'                    => $account_id,
+                            'journal_voucher_amount'        => $priceAmount['total_price_amount'] - $ppnAmount['total_tax_amount'],
+                            'account_id_default_status'     => $account_default_status,
+                            'account_id_status'             => $account_setting_status,
+                            'journal_voucher_debit_amount'  => $debit_amount,
+                            'journal_voucher_credit_amount' => $credit_amount,
+                            'updated_id'                    => Auth::id(),
+                            'created_id'                    => Auth::id()
+                        );
+                        JournalVoucherItem::create($journal_credit);
+
+                        //PPN KELUARAN
+                        $account_setting_name = 'sales_tax_out_account';
+                        $account_id = $this->getAccountId($account_setting_name);
+                        $account_setting_status = $this->getAccountSettingStatus($account_setting_name);
+                        $account_default_status = $this->getAccountDefaultStatus($account_id);
+                        $journal_voucher_id = JournalVoucher::orderBy('created_at', 'DESC')->where('company_id', $val['company_id'])->first();
+                        if ($account_setting_status == 0) {
+                            $debit_amount = $ppnAmount['total_tax_amount'];
+                            $credit_amount = 0;
+                        } else {
+                            $debit_amount = 0;
+                            $credit_amount = $ppnAmount['total_tax_amount'];
+                        }
+                        $journal_credit_ppn = array(
+                            'company_id'                    => $val['company_id'],
+                            'journal_voucher_id'            => $journal_voucher_id['journal_voucher_id'],
+                            'account_id'                    => $account_id,
+                            'journal_voucher_amount'        => $ppnAmount['total_tax_amount'],
+                            'account_id_default_status'     => $account_default_status,
+                            'account_id_status'             => $account_setting_status,
+                            'journal_voucher_debit_amount'  => $debit_amount,
+                            'journal_voucher_credit_amount' => $credit_amount,
+                            'updated_id'                    => Auth::id(),
+                            'created_id'                    => Auth::id()
+                        );
+                        JournalVoucherItem::create($journal_credit_ppn);
+
+                        //Beban Pokok Penjualan - BKP Tunai
+                        $account_setting_name = 'sales_cash_receivable_bkp_account';
+                        $account_id = $this->getAccountId($account_setting_name);
+                        $account_setting_status = $this->getAccountSettingStatus($account_setting_name);
+                        $account_default_status = $this->getAccountDefaultStatus($account_id);
+                        $journal_voucher_id = JournalVoucher::orderBy('created_at', 'DESC')->where('company_id', $val['company_id'])->first();
+                        if ($account_setting_status == 0) {
+                            $debit_amount = $hppAmount['total_hpp_amount'];
+                            $credit_amount = 0;
+                        } else {
+                            $debit_amount = 0;
+                            $credit_amount = $hppAmount['total_hpp_amount'];
+                        }
+                        $journal_debit_bkp = array(
+                            'company_id'                    => $val['company_id'],
+                            'journal_voucher_id'            => $journal_voucher_id['journal_voucher_id'],
+                            'account_id'                    => $account_id,
+                            'journal_voucher_amount'        => $hppAmount['total_hpp_amount'],
+                            'account_id_default_status'     => $account_default_status,
+                            'account_id_status'             => $account_setting_status,
+                            'journal_voucher_debit_amount'  => $debit_amount,
+                            'journal_voucher_credit_amount' => $credit_amount,
+                            'updated_id'                    => Auth::id(),
+                            'created_id'                    => Auth::id()
+                        );
+                        JournalVoucherItem::create($journal_debit_bkp);
+
+                        //Persediaan Barang Dagang Tunai
+                        $account_setting_name = 'inventory_cash_account';
+                        $account_id = $this->getAccountId($account_setting_name);
+                        $account_setting_status = $this->getAccountSettingStatus($account_setting_name);
+                        $account_default_status = $this->getAccountDefaultStatus($account_id);
+                        $journal_voucher_id = JournalVoucher::orderBy('created_at', 'DESC')->where('company_id', $val['company_id'])->first();
+                        if ($account_setting_status == 0) {
+                            $debit_amount = $hppAmount['total_hpp_amount'];
+                            $credit_amount = 0;
+                        } else {
+                            $debit_amount = 0;
+                            $credit_amount = $hppAmount['total_hpp_amount'];
+                        }
+                        $journal_credit = array(
+                            'company_id'                    => $val['company_id'],
+                            'journal_voucher_id'            => $journal_voucher_id['journal_voucher_id'],
+                            'account_id'                    => $account_id,
+                            'journal_voucher_amount'        => $hppAmount['total_hpp_amount'],
+                            'account_id_default_status'     => $account_default_status,
+                            'account_id_status'             => $account_setting_status,
+                            'journal_voucher_debit_amount'  => $debit_amount,
+                            'journal_voucher_credit_amount' => $credit_amount,
+                            'updated_id'                    => Auth::id(),
+                            'created_id'                    => Auth::id()
+                        );
+                        JournalVoucherItem::create($journal_credit);
+                    
                     }
-                    $journal_debit = array(
-                        'company_id'                    => $val['company_id'],
-                        'journal_voucher_id'            => $journal_voucher_id['journal_voucher_id'],
-                        'account_id'                    => $account_id,
-                        'journal_voucher_amount'        => $val['total_amount'],
-                        'account_id_default_status'     => $account_default_status,
-                        'account_id_status'             => $account_setting_status,
-                        'journal_voucher_debit_amount'  => $debit_amount,
-                        'journal_voucher_credit_amount' => $credit_amount,
-                        'updated_id'                    => $val['updated_id'],
-                        'created_id'                    => $val['created_id']
-                    );
-                    JournalVoucherItem::create($journal_debit);
+                    //Jurnal Tunai Non BKP 
+                    elseif (isset($items[2])) {
+                        //KAS
+                        $account_setting_name = 'sales_cash_account';
+                        $account_id = $this->getAccountId($account_setting_name);
+                        $account_setting_status = $this->getAccountSettingStatus($account_setting_name);
+                        $account_default_status = $this->getAccountDefaultStatus($account_id);
+                        $journal_voucher_id = JournalVoucher::orderBy('created_at', 'DESC')->where('company_id', $val['company_id'])->first();
+                        if($request->qris == true){
+                            if ($account_setting_status == 0) {
+                                $debit_amount = 0;
+                                $credit_amount = 0;
+                            } else {
+                                $debit_amount = 0;
+                                $credit_amount = 0;
+                            }
+                            $journal_debit = array(
+                                'company_id'                    => $val['company_id'],
+                                'journal_voucher_id'            => $journal_voucher_id['journal_voucher_id'],
+                                'account_id'                    => $account_id,
+                                'journal_voucher_amount'        => 0,
+                                'account_id_default_status'     => $account_default_status,
+                                'account_id_status'             => $account_setting_status,
+                                'journal_voucher_debit_amount'  => $debit_amount,
+                                'journal_voucher_credit_amount' => $credit_amount,
+                                'updated_id'                    => Auth::id(),
+                                'created_id'                    => Auth::id()
+                            );
+                            JournalVoucherItem::create($journal_debit);
+                        }else{
+                            if ($account_setting_status == 0) {
+                                $debit_amount = $val['total_amount'];
+                                $credit_amount = 0;
+                            } else {
+                                $debit_amount = 0;
+                                $credit_amount = $val['total_amount'];
+                            }
+                            $journal_debit = array(
+                                'company_id'                    => $val['company_id'],
+                                'journal_voucher_id'            => $journal_voucher_id['journal_voucher_id'],
+                                'account_id'                    => $account_id,
+                                'journal_voucher_amount'        => $val['total_amount'],
+                                'account_id_default_status'     => $account_default_status,
+                                'account_id_status'             => $account_setting_status,
+                                'journal_voucher_debit_amount'  => $debit_amount,
+                                'journal_voucher_credit_amount' => $credit_amount,
+                                'updated_id'                    => Auth::id(),
+                                'created_id'                    => Auth::id()
+                            );
+                            JournalVoucherItem::create($journal_debit);
+                        }
 
-                    //Piutang Qris
-                    $account_setting_name   = 'sales_cash_qris_account';
-                    $account_id             = $this->getAccountId($account_setting_name);
-                    $account_setting_status = $this->getAccountSettingStatus($account_setting_name);
-                    $account_default_status = $this->getAccountDefaultStatus($account_id);
-                    $journal_voucher_id     = JournalVoucher::orderBy('journal_voucher_id', 'DESC')->where('company_id', $val['company_id'])->first();
-                    if ($account_setting_status == 0) {
-                        $debit_amount   = $val['total_amount'];
-                        $credit_amount  = 0;
-                    } else {
-                        $debit_amount   = 0;
-                        $credit_amount  = $val['total_amount'];
+                        //Piutang Qris
+                        $account_setting_name = 'sales_cash_qris_account';
+                        $account_id = $this->getAccountId($account_setting_name);
+                        $account_setting_status = $this->getAccountSettingStatus($account_setting_name);
+                        $account_default_status = $this->getAccountDefaultStatus($account_id);
+                        $journal_voucher_id = JournalVoucher::orderBy('created_at', 'DESC')->where('company_id', $val['company_id'])->first();
+                        
+                        if($request->qris == true){
+                            if ($account_setting_status == 0) {
+                                $debit_amount = $val['total_amount'];
+                                $credit_amount = 0;
+                            } else {
+                                $debit_amount = 0;
+                                $credit_amount = $val['total_amount'];
+                            }
+                            $journal_debit = array(
+                                'company_id'                    => $val['company_id'],
+                                'journal_voucher_id'            => $journal_voucher_id['journal_voucher_id'],
+                                'account_id'                    => $account_id,
+                                'journal_voucher_amount'        => $val['total_amount'],
+                                'account_id_default_status'     => $account_default_status,
+                                'account_id_status'             => $account_setting_status,
+                                'journal_voucher_debit_amount'  => $debit_amount,
+                                'journal_voucher_credit_amount' => $credit_amount,
+                                'updated_id'                    => Auth::id(),
+                                'created_id'                    => Auth::id()
+                            );
+                            JournalVoucherItem::create($journal_debit);
+
+                        }else{
+                            if ($account_setting_status == 0) {
+                                $debit_amount = 0;
+                                $credit_amount = 0;
+                            } else {
+                                $debit_amount = 0;
+                                $credit_amount = 0;
+                            }
+                            $journal_debit = array(
+                                'company_id'                    => $val['company_id'],
+                                'journal_voucher_id'            => $journal_voucher_id['journal_voucher_id'],
+                                'account_id'                    => $account_id,
+                                'journal_voucher_amount'        => 0,
+                                'account_id_default_status'     => $account_default_status,
+                                'account_id_status'             => $account_setting_status,
+                                'journal_voucher_debit_amount'  => $debit_amount,
+                                'journal_voucher_credit_amount' => $credit_amount,
+                                'updated_id'                    => Auth::id(),
+                                'created_id'                    => Auth::id()
+                            );
+                            JournalVoucherItem::create($journal_debit);
+                        }
+
+                        //Penjualan Brg Dagang Non BKP Tunai
+                        $account_setting_name = 'sales_cashless_cash_non_bkp_account';
+                        $account_id = $this->getAccountId($account_setting_name);
+                        $account_setting_status = $this->getAccountSettingStatus($account_setting_name);
+                        $account_default_status = $this->getAccountDefaultStatus($account_id);
+                        $journal_voucher_id = JournalVoucher::orderBy('created_at', 'DESC')->where('company_id', $val['company_id'])->first();
+                        if ($account_setting_status == 0) {
+                            $debit_amount = $val['total_amount'];
+                            $credit_amount = 0;
+                        } else {
+                            $debit_amount = 0;
+                            $credit_amount = $val['total_amount'];
+                        }
+                        $journal_credit = array(
+                            'company_id'                    => $val['company_id'],
+                            'journal_voucher_id'            => $journal_voucher_id['journal_voucher_id'],
+                            'account_id'                    => $account_id,
+                            'journal_voucher_amount'        => $val['total_amount'],
+                            'account_id_default_status'     => $account_default_status,
+                            'account_id_status'             => $account_setting_status,
+                            'journal_voucher_debit_amount'  => $debit_amount,
+                            'journal_voucher_credit_amount' => $credit_amount,
+                            'updated_id'                    => Auth::id(),
+                            'created_id'                    => Auth::id()
+                        );
+                        JournalVoucherItem::create($journal_credit);
+
+                        //Beban Pokok Penjualan Non BKP Tunai
+                        $account_setting_name = 'sales_cash_receivable_non_bkp_account';
+                        $account_id = $this->getAccountId($account_setting_name);
+                        $account_setting_status = $this->getAccountSettingStatus($account_setting_name);
+                        $account_default_status = $this->getAccountDefaultStatus($account_id);
+                        $journal_voucher_id = JournalVoucher::orderBy('created_at', 'DESC')->where('company_id', $val['company_id'])->first();
+                        if ($account_setting_status == 0) {
+                            $debit_amount = $hppAmount['total_hpp_amount'];
+                            $credit_amount = 0;
+                        } else {
+                            $debit_amount = 0;
+                            $credit_amount = $hppAmount['total_hpp_amount'];
+                        }
+                        $journal_debit_bkp = array(
+                            'company_id'                    => $val['company_id'],
+                            'journal_voucher_id'            => $journal_voucher_id['journal_voucher_id'],
+                            'account_id'                    => $account_id,
+                            'journal_voucher_amount'        => $hppAmount['total_hpp_amount'],
+                            'account_id_default_status'     => $account_default_status,
+                            'account_id_status'             => $account_setting_status,
+                            'journal_voucher_debit_amount'  => $debit_amount,
+                            'journal_voucher_credit_amount' => $credit_amount,
+                            'updated_id'                    => Auth::id(),
+                            'created_id'                    => Auth::id()
+                        );
+                        JournalVoucherItem::create($journal_debit_bkp);
+
+                        //Persediaan Barang Dagang Tunai
+                        $account_setting_name = 'inventory_cash_account';
+                        $account_id = $this->getAccountId($account_setting_name);
+                        $account_setting_status = $this->getAccountSettingStatus($account_setting_name);
+                        $account_default_status = $this->getAccountDefaultStatus($account_id);
+                        $journal_voucher_id = JournalVoucher::orderBy('created_at', 'DESC')->where('company_id', $val['company_id'])->first();
+                        if ($account_setting_status == 0) {
+                            $debit_amount = $hppAmount['total_hpp_amount'];
+                            $credit_amount = 0;
+                        } else {
+                            $debit_amount = 0;
+                            $credit_amount = $hppAmount['total_hpp_amount'];
+                        }
+                        $journal_credit = array(
+                            'company_id'                    => $val['company_id'],
+                            'journal_voucher_id'            => $journal_voucher_id['journal_voucher_id'],
+                            'account_id'                    => $account_id,
+                            'journal_voucher_amount'        => $hppAmount['total_hpp_amount'],
+                            'account_id_default_status'     => $account_default_status,
+                            'account_id_status'             => $account_setting_status,
+                            'journal_voucher_debit_amount'  => $debit_amount,
+                            'journal_voucher_credit_amount' => $credit_amount,
+                            'updated_id'                    => Auth::id(),
+                            'created_id'                    => Auth::id()
+                        );
+                        JournalVoucherItem::create($journal_credit);
+
                     }
-                    $journal_debit = array(
-                        'company_id'                    => $val['company_id'],
-                        'journal_voucher_id'            => $journal_voucher_id['journal_voucher_id'],
-                        'account_id'                    => $account_id,
-                        'journal_voucher_amount'        => $val['total_amount'],
-                        'account_id_default_status'     => $account_default_status,
-                        'account_id_status'             => $account_setting_status,
-                        'journal_voucher_debit_amount'  => $debit_amount,
-                        'journal_voucher_credit_amount' => $credit_amount,
-                        'updated_id'                    => $val['updated_id'],
-                        'created_id'                    => $val['created_id']
-                    );
-                    JournalVoucherItem::create($journal_debit);
+                    //Jurnal Pulsa BKP Pulsa
+                    elseif (isset($items[3])){
+                        //KAS
+                        $account_setting_name = 'sales_cash_account';
+                        $account_id = $this->getAccountId($account_setting_name);
+                        $account_setting_status = $this->getAccountSettingStatus($account_setting_name);
+                        $account_default_status = $this->getAccountDefaultStatus($account_id);
+                        $journal_voucher_id = JournalVoucher::orderBy('created_at', 'DESC')->where('company_id', $val['company_id'])->first();
+                        if($request->qris == true){
+                            if ($account_setting_status == 0) {
+                                $debit_amount = $val['total_amount'] - $val['total_amount'];
+                                $credit_amount = 0;
+                            } else {
+                                $debit_amount = 0;
+                                $credit_amount = $val['total_amount'] - $val['total_amount'];
+                            }
+                            $journal_debit = array(
+                                'company_id'                    => $val['company_id'],
+                                'journal_voucher_id'            => $journal_voucher_id['journal_voucher_id'],
+                                'account_id'                    => $account_id,
+                                'journal_voucher_amount'        => 0,
+                                'account_id_default_status'     => $account_default_status,
+                                'account_id_status'             => $account_setting_status,
+                                'journal_voucher_debit_amount'  => $debit_amount,
+                                'journal_voucher_credit_amount' => $credit_amount,
+                                'updated_id'                    => Auth::id(),
+                                'created_id'                    => Auth::id()
+                            );
+                            JournalVoucherItem::create($journal_debit);
+                        }else{
+                            if ($account_setting_status == 0) {
+                                $debit_amount = $val['total_amount'];
+                                $credit_amount = 0;
+                            } else {
+                                $debit_amount = 0;
+                                $credit_amount = $val['total_amount'];
+                            }
+                            $journal_debit = array(
+                                'company_id'                    => $val['company_id'],
+                                'journal_voucher_id'            => $journal_voucher_id['journal_voucher_id'],
+                                'account_id'                    => $account_id,
+                                'journal_voucher_amount'        => $val['total_amount'],
+                                'account_id_default_status'     => $account_default_status,
+                                'account_id_status'             => $account_setting_status,
+                                'journal_voucher_debit_amount'  => $debit_amount,
+                                'journal_voucher_credit_amount' => $credit_amount,
+                                'updated_id'                    => Auth::id(),
+                                'created_id'                    => Auth::id()
+                            );
+                            JournalVoucherItem::create($journal_debit);
+                        }
 
+                        //Piutang Qris
+                        $account_setting_name = 'sales_cash_qris_account';
+                        $account_id = $this->getAccountId($account_setting_name);
+                        $account_setting_status = $this->getAccountSettingStatus($account_setting_name);
+                        $account_default_status = $this->getAccountDefaultStatus($account_id);
+                        $journal_voucher_id = JournalVoucher::orderBy('created_at', 'DESC')->where('company_id', $val['company_id'])->first();
+                        
+                        if($request->qris == true){
+                            if ($account_setting_status == 0) {
+                                $debit_amount = $val['total_amount'];
+                                $credit_amount = 0;
+                            } else {
+                                $debit_amount = 0;
+                                $credit_amount = $val['total_amount'];
+                            }
+                            $journal_debit = array(
+                                'company_id'                    => $val['company_id'],
+                                'journal_voucher_id'            => $journal_voucher_id['journal_voucher_id'],
+                                'account_id'                    => $account_id,
+                                'journal_voucher_amount'        => $val['total_amount'],
+                                'account_id_default_status'     => $account_default_status,
+                                'account_id_status'             => $account_setting_status,
+                                'journal_voucher_debit_amount'  => $debit_amount,
+                                'journal_voucher_credit_amount' => $credit_amount,
+                                'updated_id'                    => Auth::id(),
+                                'created_id'                    => Auth::id()
+                            );
+                            JournalVoucherItem::create($journal_debit);
 
-                    //Penjualan Brg Dagang- BKP Tunai
-                    $account_setting_name = 'sales_receivable_bkp_account';
-                    $account_id = $this->getAccountId($account_setting_name);
-                    $account_setting_status = $this->getAccountSettingStatus($account_setting_name);
-                    $account_default_status = $this->getAccountDefaultStatus($account_id);
-                    $journal_voucher_id     = JournalVoucher::orderBy('journal_voucher_id', 'DESC')->where('company_id', $val['company_id'])->first();
-                    if ($account_setting_status == 0) {
-                        $debit_amount = $total_amount_bkp['total_amount'];
-                        $credit_amount = 0;
-                    } else {
-                        $debit_amount = 0;
-                        $credit_amount = $total_amount_bkp['total_amount'];
+                        }else{
+                            if ($account_setting_status == 0) {
+                                $debit_amount = $val['total_amount'] - $val['total_amount'];
+                                $credit_amount = 0;
+                            } else {
+                                $debit_amount = 0;
+                                $credit_amount = $val['total_amount'] - $val['total_amount'];
+                            }
+                            $journal_debit = array(
+                                'company_id'                    => $val['company_id'],
+                                'journal_voucher_id'            => $journal_voucher_id['journal_voucher_id'],
+                                'account_id'                    => $account_id,
+                                'journal_voucher_amount'        => 0,
+                                'account_id_default_status'     => $account_default_status,
+                                'account_id_status'             => $account_setting_status,
+                                'journal_voucher_debit_amount'  => $debit_amount,
+                                'journal_voucher_credit_amount' => $credit_amount,
+                                'updated_id'                    => Auth::id(),
+                                'created_id'                    => Auth::id()
+                            );
+                            JournalVoucherItem::create($journal_debit);
+                        }
+
+                        //Penjualan Brg Dagang BKP Tunai
+                        $account_setting_name = 'sales_receivable_bkp_account';
+                        $account_id = $this->getAccountId($account_setting_name);
+                        $account_setting_status = $this->getAccountSettingStatus($account_setting_name);
+                        $account_default_status = $this->getAccountDefaultStatus($account_id);
+                        $journal_voucher_id = JournalVoucher::orderBy('created_at', 'DESC')->where('company_id', $val['company_id'])->first();
+                        if ($account_setting_status == 0) {
+                            $debit_amount = $priceAmount['total_price_amount'];
+                            $credit_amount = 0;
+                        } else {
+                            $debit_amount = 0;
+                            $credit_amount = $priceAmount['total_price_amount'];
+                        }
+                        $journal_credit = array(
+                            'company_id'                    => $val['company_id'],
+                            'journal_voucher_id'            => $journal_voucher_id['journal_voucher_id'],
+                            'account_id'                    => $account_id,
+                            'journal_voucher_amount'        => $priceAmount['total_price_amount'],
+                            'account_id_default_status'     => $account_default_status,
+                            'account_id_status'             => $account_setting_status,
+                            'journal_voucher_debit_amount'  => $debit_amount,
+                            'journal_voucher_credit_amount' => $credit_amount,
+                            'updated_id'                    => Auth::id(),
+                            'created_id'                    => Auth::id()
+                        );
+                        JournalVoucherItem::create($journal_credit);
+
+                        //Beban Pokok Penjualan - BKP Tunai
+                        $account_setting_name = 'sales_cash_receivable_bkp_account';
+                        $account_id = $this->getAccountId($account_setting_name);
+                        $account_setting_status = $this->getAccountSettingStatus($account_setting_name);
+                        $account_default_status = $this->getAccountDefaultStatus($account_id);
+                        $journal_voucher_id = JournalVoucher::orderBy('created_at', 'DESC')->where('company_id', $val['company_id'])->first();
+                        if ($account_setting_status == 0) {
+                            $debit_amount = $hppAmount['total_hpp_amount'];
+                            $credit_amount = 0;
+                        } else {
+                            $debit_amount = 0;
+                            $credit_amount = $hppAmount['total_hpp_amount'];
+                        }
+                        $journal_debit_bkp = array(
+                            'company_id'                    => $val['company_id'],
+                            'journal_voucher_id'            => $journal_voucher_id['journal_voucher_id'],
+                            'account_id'                    => $account_id,
+                            'journal_voucher_amount'        => $hppAmount['total_hpp_amount'],
+                            'account_id_default_status'     => $account_default_status,
+                            'account_id_status'             => $account_setting_status,
+                            'journal_voucher_debit_amount'  => $debit_amount,
+                            'journal_voucher_credit_amount' => $credit_amount,
+                            'updated_id'                    => Auth::id(),
+                            'created_id'                    => Auth::id()
+                        );
+                        JournalVoucherItem::create($journal_debit_bkp);
+
+                        //Persediaan Barang Dagang Tunai
+                        $account_setting_name = 'inventory_cash_account';
+                        $account_id = $this->getAccountId($account_setting_name);
+                        $account_setting_status = $this->getAccountSettingStatus($account_setting_name);
+                        $account_default_status = $this->getAccountDefaultStatus($account_id);
+                        $journal_voucher_id = JournalVoucher::orderBy('created_at', 'DESC')->where('company_id', $val['company_id'])->first();
+                        if ($account_setting_status == 0) {
+                            $debit_amount = $hppAmount['total_hpp_amount'];
+                            $credit_amount = 0;
+                        } else {
+                            $debit_amount = 0;
+                            $credit_amount = $hppAmount['total_hpp_amount'];
+                        }
+                        $journal_credit = array(
+                            'company_id'                    => $val['company_id'],
+                            'journal_voucher_id'            => $journal_voucher_id['journal_voucher_id'],
+                            'account_id'                    => $account_id,
+                            'journal_voucher_amount'        => $hppAmount['total_hpp_amount'],
+                            'account_id_default_status'     => $account_default_status,
+                            'account_id_status'             => $account_setting_status,
+                            'journal_voucher_debit_amount'  => $debit_amount,
+                            'journal_voucher_credit_amount' => $credit_amount,
+                            'updated_id'                    => Auth::id(),
+                            'created_id'                    => Auth::id()
+                        );
+                        JournalVoucherItem::create($journal_credit);
                     }
-                    $journal_credit = array(
-                        'company_id'                    => $val['company_id'],
-                        'journal_voucher_id'            => $journal_voucher_id['journal_voucher_id'],
-                        'account_id'                    => $account_id,
-                        'journal_voucher_amount'        => $total_amount_bkp['total_amount'],
-                        'account_id_default_status'     => $account_default_status,
-                        'account_id_status'             => $account_setting_status,
-                        'journal_voucher_debit_amount'  => $debit_amount,
-                        'journal_voucher_credit_amount' => $credit_amount,
-                        'updated_id'                    => $val['updated_id'],
-                        'created_id'                    => $val['created_id']
-                    );
-                    JournalVoucherItem::create($journal_credit);
+                        break;
+                    case 2: //Kredit
+                    //Jurnal Kredit BKP
+                    if (isset($items[1])) {
+                        //Piutang Usaha
+                        $account_setting_name = 'sales_receivable_account';
+                        $account_id = $this->getAccountId($account_setting_name);
+                        $account_setting_status = $this->getAccountSettingStatus($account_setting_name);
+                        $account_default_status = $this->getAccountDefaultStatus($account_id);
+                        $journal_voucher_id = JournalVoucher::orderBy('created_at', 'DESC')->where('company_id', $val['company_id'])->first();
+                        if ($account_setting_status == 0) {
+                            $debit_amount = $val['total_amount'];
+                            $credit_amount = 0;
+                        } else {
+                            $debit_amount = 0;
+                            $credit_amount = $val['total_amount'];
+                        }
+                        $journal_debit = array(
+                            'company_id'                    => $val['company_id'],
+                            'journal_voucher_id'            => $journal_voucher_id['journal_voucher_id'],
+                            'account_id'                    => $account_id,
+                            'journal_voucher_amount'        => $val['total_amount'],
+                            'account_id_default_status'     => $account_default_status,
+                            'account_id_status'             => $account_setting_status,
+                            'journal_voucher_debit_amount'  => $debit_amount,
+                            'journal_voucher_credit_amount' => $credit_amount,
+                            'updated_id'                    => Auth::id(),
+                            'created_id'                    => Auth::id()
+                        );
+                        JournalVoucherItem::create($journal_debit);
 
+                        //Penjualan Brg Dagang- BKP kredit
+                        $account_setting_name = 'sales_receivable_bkp_account';
+                        $account_id = $this->getAccountId($account_setting_name);
+                        $account_setting_status = $this->getAccountSettingStatus($account_setting_name);
+                        $account_default_status = $this->getAccountDefaultStatus($account_id);
+                        $journal_voucher_id = JournalVoucher::orderBy('created_at', 'DESC')->where('company_id', $val['company_id'])->first();
+                        if ($account_setting_status == 0) {
+                            $debit_amount = $priceAmount['total_price_amount'] - $ppnAmount['total_tax_amount'];
+                            $credit_amount = 0;
+                        } else {
+                            $debit_amount = 0;
+                            $credit_amount = $priceAmount['total_price_amount'] - $ppnAmount['total_tax_amount'];
+                        }
+                        $journal_credit = array(
+                            'company_id'                    => $val['company_id'],
+                            'journal_voucher_id'            => $journal_voucher_id['journal_voucher_id'],
+                            'account_id'                    => $account_id,
+                            'journal_voucher_amount'        => $priceAmount['total_price_amount'] - $ppnAmount['total_tax_amount'],
+                            'account_id_default_status'     => $account_default_status,
+                            'account_id_status'             => $account_setting_status,
+                            'journal_voucher_debit_amount'  => $debit_amount,
+                            'journal_voucher_credit_amount' => $credit_amount,
+                            'updated_id'                    => Auth::id(),
+                            'created_id'                    => Auth::id()
+                        );
+                        JournalVoucherItem::create($journal_credit);
 
-                    //PPN KELUARAN Tunai
-                    $account_setting_name = 'sales_tax_out_account';
-                    $account_id = $this->getAccountId($account_setting_name);
-                    $account_setting_status = $this->getAccountSettingStatus($account_setting_name);
-                    $account_default_status = $this->getAccountDefaultStatus($account_id);
-                    $journal_voucher_id     = JournalVoucher::orderBy('journal_voucher_id', 'DESC')->where('company_id', $val['company_id'])->first();
-                    if ($account_setting_status == 0) {
-                        $debit_amount = $ppnAmount['total_tax_amount'];
-                        $credit_amount = 0;
-                    } else {
-                        $debit_amount = 0;
-                        $credit_amount = $ppnAmount['total_tax_amount'];
-                    }
-                    $journal_credit_ppn = array(
-                        'company_id'                     => $val['company_id'],
-                        'journal_voucher_id'            => $journal_voucher_id['journal_voucher_id'],
-                        'account_id'                    => $account_id,
-                        'journal_voucher_amount'        => $ppnAmount['total_tax_amount'],
-                        'account_id_default_status'     => $account_default_status,
-                        'account_id_status'             => $account_setting_status,
-                        'journal_voucher_debit_amount'  => $debit_amount,
-                        'journal_voucher_credit_amount' => $credit_amount,
-                        'updated_id'                    => $val['updated_id'],
-                        'created_id'                    => $val['created_id']
-                    );
-                    JournalVoucherItem::create($journal_credit_ppn);
+                        //ppn bkp Kredit
+                        $account_setting_name = 'sales_tax_out_account';
+                        $account_id = $this->getAccountId($account_setting_name);
+                        $account_setting_status = $this->getAccountSettingStatus($account_setting_name);
+                        $account_default_status = $this->getAccountDefaultStatus($account_id);
+                        $journal_voucher_id = JournalVoucher::orderBy('created_at', 'DESC')->where('company_id', $val['company_id'])->first();
+                        if ($account_setting_status == 0) {
+                            $debit_amount = $ppnAmount['total_tax_amount'];
+                            $credit_amount = 0;
+                        } else {
+                            $debit_amount = 0;
+                            $credit_amount = $ppnAmount['total_tax_amount'];
+                        }
+                        $journal_credit_ppn = array(
+                            'company_id'                    => $val['company_id'],
+                            'journal_voucher_id'            => $journal_voucher_id['journal_voucher_id'],
+                            'account_id'                    => $account_id,
+                            'journal_voucher_amount'        => $ppnAmount['total_tax_amount'],
+                            'account_id_default_status'     => $account_default_status,
+                            'account_id_status'             => $account_setting_status,
+                            'journal_voucher_debit_amount'  => $debit_amount,
+                            'journal_voucher_credit_amount' => $credit_amount,
+                            'updated_id'                    => Auth::id(),
+                            'created_id'                    => Auth::id()
+                        );
+                        JournalVoucherItem::create($journal_credit_ppn);
 
-                    //beban pokok penjualan BKP Tunai
-                    $account_setting_name = 'sales_cash_receivable_bkp_account';
-                    $account_id = $this->getAccountId($account_setting_name);
-                    $account_setting_status = $this->getAccountSettingStatus($account_setting_name);
-                    $account_default_status = $this->getAccountDefaultStatus($account_id);
-                    $journal_voucher_id     = JournalVoucher::orderBy('journal_voucher_id', 'DESC')->where('company_id', $val['company_id'])->first();
-                    if ($account_setting_status == 0) {
-                        $debit_amount =  $total_unit_cost['total_unit_cost'];
-                        $credit_amount = 0;
-                    } else {
-                        $debit_amount = 0;
-                        $credit_amount =  $total_unit_cost['total_unit_cost'];
-                    }
-                    $journal_debit_bkp = array(
-                        'company_id'                    => $val['company_id'],
-                        'journal_voucher_id'            => $journal_voucher_id['journal_voucher_id'],
-                        'account_id'                    => $account_id,
-                        'journal_voucher_amount'        =>  $total_unit_cost['total_unit_cost'],
-                        'account_id_default_status'     => $account_default_status,
-                        'account_id_status'             => $account_setting_status,
-                        'journal_voucher_debit_amount'  => $debit_amount,
-                        'journal_voucher_credit_amount' => $credit_amount,
-                        'updated_id'                    => $val['updated_id'],
-                        'created_id'                    => $val['created_id']
-                    );
-                    JournalVoucherItem::create($journal_debit_bkp);
+                        //Beban pokok penjualan BKP Kredit
+                        $account_setting_name = 'sales_cash_receivable_bkp_account';
+                        $account_id = $this->getAccountId($account_setting_name);
+                        $account_setting_status = $this->getAccountSettingStatus($account_setting_name);
+                        $account_default_status = $this->getAccountDefaultStatus($account_id);
+                        $journal_voucher_id = JournalVoucher::orderBy('created_at', 'DESC')->where('company_id', $val['company_id'])->first();
+                        if ($account_setting_status == 0) {
+                            $debit_amount =  $hppAmount['total_hpp_amount'];
+                            $credit_amount = 0;
+                        } else {
+                            $debit_amount = 0;
+                            $credit_amount =  $hppAmount['total_hpp_amount'];
+                        }
+                        $journal_debit_bkp = array(
+                            'company_id'                    => $val['company_id'],
+                            'journal_voucher_id'            => $journal_voucher_id['journal_voucher_id'],
+                            'account_id'                    => $account_id,
+                            'journal_voucher_amount'        =>  $hppAmount['total_hpp_amount'],
+                            'account_id_default_status'     => $account_default_status,
+                            'account_id_status'             => $account_setting_status,
+                            'journal_voucher_debit_amount'  => $debit_amount,
+                            'journal_voucher_credit_amount' => $credit_amount,
+                            'updated_id'                    => Auth::id(),
+                            'created_id'                    => Auth::id()
+                        );
+                        JournalVoucherItem::create($journal_debit_bkp);
 
+                        //Persediaan Barang Dagang Tunai
+                        $account_setting_name = 'inventory_cash_account';
+                        $account_id = $this->getAccountId($account_setting_name);
+                        $account_setting_status = $this->getAccountSettingStatus($account_setting_name);
+                        $account_default_status = $this->getAccountDefaultStatus($account_id);
+                        $journal_voucher_id = JournalVoucher::orderBy('created_at', 'DESC')->where('company_id', $val['company_id'])->first();
+                        if ($account_setting_status == 0) {
+                            $debit_amount = $hppAmount['total_hpp_amount'];
+                            $credit_amount = 0;
+                        } else {
+                            $debit_amount = 0;
+                            $credit_amount = $hppAmount['total_hpp_amount'];
+                        }
+                        $journal_credit = array(
+                            'company_id'                    => $val['company_id'],
+                            'journal_voucher_id'            => $journal_voucher_id['journal_voucher_id'],
+                            'account_id'                    => $account_id,
+                            'journal_voucher_amount'        => $hppAmount['total_hpp_amount'],
+                            'account_id_default_status'     => $account_default_status,
+                            'account_id_status'             => $account_setting_status,
+                            'journal_voucher_debit_amount'  => $debit_amount,
+                            'journal_voucher_credit_amount' => $credit_amount,
+                            'updated_id'                    => Auth::id(),
+                            'created_id'                    => Auth::id()
+                        );
+                        JournalVoucherItem::create($journal_credit);
 
-                    //Persediaan Barang Dagang
-                    $account_setting_name = 'purchase_account';
-                    $account_id = $this->getAccountId($account_setting_name);
-                    $account_setting_status = $this->getAccountSettingStatus($account_setting_name);
-                    $account_default_status = $this->getAccountDefaultStatus($account_id);
-                    $journal_voucher_id     = JournalVoucher::orderBy('journal_voucher_id', 'DESC')->where('company_id', $val['company_id'])->first();
-                    if ($account_setting_status == 0) {
-                        $debit_amount = $total_unit_cost['total_unit_cost'];
-                        $credit_amount = 0;
-                    } else {
-                        $debit_amount = 0;
-                        $credit_amount = $total_unit_cost['total_unit_cost'];
-                    }
-                    $journal_debit_bkp = array(
-                        'company_id'                    => $val['company_id'],
-                        'journal_voucher_id'            => $journal_voucher_id['journal_voucher_id'],
-                        'account_id'                    => $account_id,
-                        'journal_voucher_amount'        => $total_unit_cost['total_unit_cost'],
-                        'account_id_default_status'     => $account_default_status,
-                        'account_id_status'             => $account_setting_status,
-                        'journal_voucher_debit_amount'  => $debit_amount,
-                        'journal_voucher_credit_amount' => $credit_amount,
-                        'updated_id'                    => $val['updated_id'],
-                        'created_id'                    => $val['created_id']
-                    );
-                    JournalVoucherItem::create($journal_debit_bkp);
-
-
-                    //Kredit
-                } else if ($bkp && $val['sales_payment_method'] == 2) {
-                    //Piutang Usaha
-                    $account_setting_name = 'sales_receivable_account';
-                    $account_id             = $this->getAccountId($account_setting_name);
-                    $account_setting_status = $this->getAccountSettingStatus($account_setting_name);
-                    $account_default_status = $this->getAccountDefaultStatus($account_id);
-                    $journal_voucher_id     = JournalVoucher::orderBy('journal_voucher_id', 'DESC')->where('company_id', $val['company_id'])->first();
-                    if ($account_setting_status == 0) {
-                        $debit_amount   = $val['total_amount'];
-                        $credit_amount  = 0;
-                    } else {
-                        $debit_amount   = 0;
-                        $credit_amount  = $val['total_amount'];
-                    }
-                    $journal_debit = array(
-                        'company_id'                    => $val['company_id'],
-                        'journal_voucher_id'            => $journal_voucher_id['journal_voucher_id'],
-                        'account_id'                    => $account_id,
-                        'journal_voucher_amount'        => $val['total_amount'],
-                        'account_id_default_status'     => $account_default_status,
-                        'account_id_status'             => $account_setting_status,
-                        'journal_voucher_debit_amount'  => $debit_amount,
-                        'journal_voucher_credit_amount' => $credit_amount,
-                        'updated_id'                    => $val['updated_id'],
-                        'created_id'                    => $val['created_id']
-                    );
-                    JournalVoucherItem::create($journal_debit);
-
-                    //Penjualan Brg Dagang- BKP kredit
-                    $account_setting_name = 'sales_receivable_bkp_account';
-                    $account_id = $this->getAccountId($account_setting_name);
-                    $account_setting_status = $this->getAccountSettingStatus($account_setting_name);
-                    $account_default_status = $this->getAccountDefaultStatus($account_id);
-                    $journal_voucher_id     = JournalVoucher::orderBy('journal_voucher_id', 'DESC')->where('company_id', $val['company_id'])->first();
-                    if ($account_setting_status == 0) {
-                        $debit_amount = $total_amount_bkp['total_amount'];
-                        $credit_amount = 0;
-                    } else {
-                        $debit_amount = 0;
-                        $credit_amount = $total_amount_bkp['total_amount'];
-                    }
-                    $journal_credit = array(
-                        'company_id'                    => $val['company_id'],
-                        'journal_voucher_id'            => $journal_voucher_id['journal_voucher_id'],
-                        'account_id'                    => $account_id,
-                        'journal_voucher_amount'        => $total_amount_bkp['total_amount'],
-                        'account_id_default_status'     => $account_default_status,
-                        'account_id_status'             => $account_setting_status,
-                        'journal_voucher_debit_amount'  => $debit_amount,
-                        'journal_voucher_credit_amount' => $credit_amount,
-                        'updated_id'                    => $val['updated_id'],
-                        'created_id'                    => $val['created_id']
-                    );
-                    JournalVoucherItem::create($journal_credit);
-
-
-                    //ppn bkp Kredit
-                    $account_setting_name = 'sales_tax_out_account';
-                    $account_id = $this->getAccountId($account_setting_name);
-                    $account_setting_status = $this->getAccountSettingStatus($account_setting_name);
-                    $account_default_status = $this->getAccountDefaultStatus($account_id);
-                    $journal_voucher_id     = JournalVoucher::orderBy('journal_voucher_id', 'DESC')->where('company_id', $val['company_id'])->first();
-                    if ($account_setting_status == 0) {
-                        $debit_amount = $ppnAmount['total_tax_amount'];
-                        $credit_amount = 0;
-                    } else {
-                        $debit_amount = 0;
-                        $credit_amount = $ppnAmount['total_tax_amount'];
-                    }
-                    $journal_credit_ppn = array(
-                        'company_id'                    => $val['company_id'],
-                        'journal_voucher_id'            => $journal_voucher_id['journal_voucher_id'],
-                        'account_id'                    => $account_id,
-                        'journal_voucher_amount'        => $ppnAmount['total_tax_amount'],
-                        'account_id_default_status'     => $account_default_status,
-                        'account_id_status'             => $account_setting_status,
-                        'journal_voucher_debit_amount'  => $debit_amount,
-                        'journal_voucher_credit_amount' => $credit_amount,
-                        'updated_id'                    => $val['updated_id'],
-                        'created_id'                    => $val['created_id']
-                    );
-                    JournalVoucherItem::create($journal_credit_ppn);
-
-
-                    //beban pokok penjualan BKP Kredit
-                    $account_setting_name = 'sales_cash_receivable_bkp_account';
-                    $account_id = $this->getAccountId($account_setting_name);
-                    $account_setting_status = $this->getAccountSettingStatus($account_setting_name);
-                    $account_default_status = $this->getAccountDefaultStatus($account_id);
-                    $journal_voucher_id     = JournalVoucher::orderBy('journal_voucher_id', 'DESC')->where('company_id', $val['company_id'])->first();
-                    if ($account_setting_status == 0) {
-                        $debit_amount =  $total_unit_cost['total_unit_cost'];
-                        $credit_amount = 0;
-                    } else {
-                        $debit_amount = 0;
-                        $credit_amount =  $total_unit_cost['total_unit_cost'];
-                    }
-                    $journal_debit_bkp = array(
-                        'company_id'                    => $val['company_id'],
-                        'journal_voucher_id'            => $journal_voucher_id['journal_voucher_id'],
-                        'account_id'                    => $account_id,
-                        'journal_voucher_amount'        =>  $total_unit_cost['total_unit_cost'],
-                        'account_id_default_status'     => $account_default_status,
-                        'account_id_status'             => $account_setting_status,
-                        'journal_voucher_debit_amount'  => $debit_amount,
-                        'journal_voucher_credit_amount' => $credit_amount,
-                        'updated_id'                    => $val['updated_id'],
-                        'created_id'                    => $val['created_id']
-                    );
-                    JournalVoucherItem::create($journal_debit_bkp);
-                    $datacoremember = CoreMember::where('member_id', $val['customer_id'])
+                        $datacoremember = CoreMember::where('member_id', $request->customer_id)
                         ->first();
-                    // CoreMember::where('member_id', $val['customer_id'])
-                    //     ->update(['member_account_receivable_amount_temp' => $datacoremember['member_account_receivable_amount_temp'] + $total_amount_bkp['total_amount'],]);
-
-                    //Persediaan Barang Dagang
-                    $account_setting_name = 'purchase_account';
-                    $account_id = $this->getAccountId($account_setting_name);
-                    $account_setting_status = $this->getAccountSettingStatus($account_setting_name);
-                    $account_default_status = $this->getAccountDefaultStatus($account_id);
-                    $journal_voucher_id     = JournalVoucher::orderBy('journal_voucher_id', 'DESC')->where('company_id', $val['company_id'])->first();
-                    if ($account_setting_status == 0) {
-                        $debit_amount = $total_unit_cost['total_unit_cost'];
-                        $credit_amount = 0;
-                    } else {
-                        $debit_amount = 0;
-                        $credit_amount = $total_unit_cost['total_unit_cost'];
+                        CoreMember::where('member_id', $request->customer_id)
+                            ->update(['member_account_receivable_amount_temp' => $datacoremember['member_account_receivable_amount_temp'] + $val['total_amount'],]);
+                    
                     }
-                    $journal_debit_bkp = array(
-                        'company_id'                    => $val['company_id'],
-                        'journal_voucher_id'            => $journal_voucher_id['journal_voucher_id'],
-                        'account_id'                    => $account_id,
-                        'journal_voucher_amount'        => $total_unit_cost['total_unit_cost'],
-                        'account_id_default_status'     => $account_default_status,
-                        'account_id_status'             => $account_setting_status,
-                        'journal_voucher_debit_amount'  => $debit_amount,
-                        'journal_voucher_credit_amount' => $credit_amount,
-                        'updated_id'                    => $val['updated_id'],
-                        'created_id'                    => $val['created_id']
-                    );
-                    JournalVoucherItem::create($journal_debit_bkp);
+                    //Jurnal Kredit Non BKP
+                    elseif (isset($items[2])) {
+                        //Piutang Usaha
+                        $account_setting_name = 'sales_receivable_account';
+                        $account_id = $this->getAccountId($account_setting_name);
+                        $account_setting_status = $this->getAccountSettingStatus($account_setting_name);
+                        $account_default_status = $this->getAccountDefaultStatus($account_id);
+                        $journal_voucher_id = JournalVoucher::orderBy('created_at', 'DESC')->where('company_id', $val['company_id'])->first();
+                        if ($account_setting_status == 0) {
+                            $debit_amount = $val['total_amount'];
+                            $credit_amount = 0;
+                        } else {
+                            $debit_amount = 0;
+                            $credit_amount = $val['total_amount'];
+                        }
+                        $journal_debit = array(
+                            'company_id'                    => $val['company_id'],
+                            'journal_voucher_id'            => $journal_voucher_id['journal_voucher_id'],
+                            'account_id'                    => $account_id,
+                            'journal_voucher_amount'        => $val['total_amount'],
+                            'account_id_default_status'     => $account_default_status,
+                            'account_id_status'             => $account_setting_status,
+                            'journal_voucher_debit_amount'  => $debit_amount,
+                            'journal_voucher_credit_amount' => $credit_amount,
+                            'updated_id'                    => Auth::id(),
+                            'created_id'                    => Auth::id()
+                        );
+                        JournalVoucherItem::create($journal_debit);
 
+                        //Penjualan Brg Dagang Non BKP kredit
+                        $account_setting_name = 'sales_cashless_cash_non_bkp_account';
+                        $account_id = $this->getAccountId($account_setting_name);
+                        $account_setting_status = $this->getAccountSettingStatus($account_setting_name);
+                        $account_default_status = $this->getAccountDefaultStatus($account_id);
+                        $journal_voucher_id = JournalVoucher::orderBy('created_at', 'DESC')->where('company_id', $val['company_id'])->first();
+                        if ($account_setting_status == 0) {
+                            $debit_amount =  $val['total_amount'];
+                            $credit_amount = 0;
+                        } else {
+                            $debit_amount = 0;
+                            $credit_amount =  $val['total_amount'];
+                        }
+                        $journal_credit = array(
+                            'company_id'                    => $val['company_id'],
+                            'journal_voucher_id'            => $journal_voucher_id['journal_voucher_id'],
+                            'account_id'                    => $account_id,
+                            'journal_voucher_amount'        =>  $val['total_amount'],
+                            'account_id_default_status'     => $account_default_status,
+                            'account_id_status'             => $account_setting_status,
+                            'journal_voucher_debit_amount'  => $debit_amount,
+                            'journal_voucher_credit_amount' => $credit_amount,
+                            'updated_id'                    => Auth::id(),
+                            'created_id'                    => Auth::id()
+                        );
+                        JournalVoucherItem::create($journal_credit);
 
-                    //Tunai Non BKP 
-                } else if (empty($bkp) && $val['sales_payment_method'] == 1) {
-                    $account_setting_name = 'sales_cash_account';
-                    $account_id = $this->getAccountId($account_setting_name);
-                    $account_setting_status = $this->getAccountSettingStatus($account_setting_name);
-                    $account_default_status = $this->getAccountDefaultStatus($account_id);
-                    $journal_voucher_id     = JournalVoucher::orderBy('journal_voucher_id', 'DESC')->where('company_id', $val['company_id'])->first();
-                    if ($account_setting_status == 0) {
-                        $debit_amount = $val['total_amount'];
-                        $credit_amount = 0;
-                    } else {
-                        $debit_amount = 0;
-                        $credit_amount = $val['total_amount'];
-                    }
-                    $journal_debit = array(
-                        'company_id'                    => $val['company_id'],
-                        'journal_voucher_id'            => $journal_voucher_id['journal_voucher_id'],
-                        'account_id'                    => $account_id,
-                        'journal_voucher_amount'        => $val['total_amount'],
-                        'account_id_default_status'     => $account_default_status,
-                        'account_id_status'             => $account_setting_status,
-                        'journal_voucher_debit_amount'  => $debit_amount,
-                        'journal_voucher_credit_amount' => $credit_amount,
-                        'updated_id'                    => $val['updated_id'],
-                        'created_id'                    => $val['created_id']
-                    );
-                    JournalVoucherItem::create($journal_debit);
+                        //Beban Pokok Penjualan Non BKP Kredit
+                        $account_setting_name = 'sales_cash_receivable_non_bkp_account';
+                        $account_id = $this->getAccountId($account_setting_name);
+                        $account_setting_status = $this->getAccountSettingStatus($account_setting_name);
+                        $account_default_status = $this->getAccountDefaultStatus($account_id);
+                        $journal_voucher_id = JournalVoucher::orderBy('created_at', 'DESC')->where('company_id', $val['company_id'])->first();
+                        if ($account_setting_status == 0) {
+                            $debit_amount =  $hppAmount['total_hpp_amount'];
+                            $credit_amount = 0;
+                        } else {
+                            $debit_amount = 0;
+                            $credit_amount =  $hppAmount['total_hpp_amount'];
+                        }
+                        $journal_debit_bkp = array(
+                            'company_id'                    => $val['company_id'],
+                            'journal_voucher_id'            => $journal_voucher_id['journal_voucher_id'],
+                            'account_id'                    => $account_id,
+                            'journal_voucher_amount'        =>  $hppAmount['total_hpp_amount'],
+                            'account_id_default_status'     => $account_default_status,
+                            'account_id_status'             => $account_setting_status,
+                            'journal_voucher_debit_amount'  => $debit_amount,
+                            'journal_voucher_credit_amount' => $credit_amount,
+                            'updated_id'                    => Auth::id(),
+                            'created_id'                    => Auth::id()
+                        );
+                        JournalVoucherItem::create($journal_debit_bkp);
 
-                    //Penjualan Brg Dagang Non BKP Tunai
-                    $account_setting_name = 'sales_cashless_cash_non_bkp_account';
-                    $account_id = $this->getAccountId($account_setting_name);
-                    $account_setting_status = $this->getAccountSettingStatus($account_setting_name);
-                    $account_default_status = $this->getAccountDefaultStatus($account_id);
-                    $journal_voucher_id     = JournalVoucher::orderBy('journal_voucher_id', 'DESC')->where('company_id', $val['company_id'])->first();
-                    if ($account_setting_status == 0) {
-                        $debit_amount = $val['total_amount'];
-                        $credit_amount = 0;
-                    } else {
-                        $debit_amount = 0;
-                        $credit_amount = $val['total_amount'];
-                    }
-                    $journal_credit = array(
-                        'company_id'                    => $val['company_id'],
-                        'journal_voucher_id'            => $journal_voucher_id['journal_voucher_id'],
-                        'account_id'                    => $account_id,
-                        'journal_voucher_amount'        => $val['total_amount'],
-                        'account_id_default_status'     => $account_default_status,
-                        'account_id_status'             => $account_setting_status,
-                        'journal_voucher_debit_amount'  => $debit_amount,
-                        'journal_voucher_credit_amount' => $credit_amount,
-                        'updated_id'                    => $val['updated_id'],
-                        'created_id'                    => $val['created_id']
-                    );
-                    JournalVoucherItem::create($journal_credit);
+                        //Persediaan Barang Dagang Tunai
+                        $account_setting_name = 'inventory_cash_account';
+                        $account_id = $this->getAccountId($account_setting_name);
+                        $account_setting_status = $this->getAccountSettingStatus($account_setting_name);
+                        $account_default_status = $this->getAccountDefaultStatus($account_id);
+                        $journal_voucher_id = JournalVoucher::orderBy('created_at', 'DESC')->where('company_id', $val['company_id'])->first();
+                        if ($account_setting_status == 0) {
+                            $debit_amount = $hppAmount['total_hpp_amount'];
+                            $credit_amount = 0;
+                        } else {
+                            $debit_amount = 0;
+                            $credit_amount = $hppAmount['total_hpp_amount'];
+                        }
+                        $journal_credit = array(
+                            'company_id'                    => $val['company_id'],
+                            'journal_voucher_id'            => $journal_voucher_id['journal_voucher_id'],
+                            'account_id'                    => $account_id,
+                            'journal_voucher_amount'        => $hppAmount['total_hpp_amount'],
+                            'account_id_default_status'     => $account_default_status,
+                            'account_id_status'             => $account_setting_status,
+                            'journal_voucher_debit_amount'  => $debit_amount,
+                            'journal_voucher_credit_amount' => $credit_amount,
+                            'updated_id'                    => Auth::id(),
+                            'created_id'                    => Auth::id()
+                        );
+                        JournalVoucherItem::create($journal_credit);
 
-                    //beban pokok penjualan Non BKP Tunai
-                    $account_setting_name = 'sales_cash_receivable_non_bkp_account';
-                    $account_id = $this->getAccountId($account_setting_name);
-                    $account_setting_status = $this->getAccountSettingStatus($account_setting_name);
-                    $account_default_status = $this->getAccountDefaultStatus($account_id);
-                    $journal_voucher_id     = JournalVoucher::orderBy('journal_voucher_id', 'DESC')->where('company_id', $val['company_id'])->first();
-                    if ($account_setting_status == 0) {
-                        $debit_amount =  $total_unit_cost['total_unit_cost'];
-                        $credit_amount = 0;
-                    } else {
-                        $debit_amount = 0;
-                        $credit_amount =  $total_unit_cost['total_unit_cost'];
-                    }
-                    $journal_debit_bkp = array(
-                        'company_id'                    => $val['company_id'],
-                        'journal_voucher_id'            => $journal_voucher_id['journal_voucher_id'],
-                        'account_id'                    => $account_id,
-                        'journal_voucher_amount'        =>  $total_unit_cost['total_unit_cost'],
-                        'account_id_default_status'     => $account_default_status,
-                        'account_id_status'             => $account_setting_status,
-                        'journal_voucher_debit_amount'  => $debit_amount,
-                        'journal_voucher_credit_amount' => $credit_amount,
-                        'updated_id'                    => $val['updated_id'],
-                        'created_id'                    => $val['created_id']
-                    );
-                    JournalVoucherItem::create($journal_debit_bkp);
-
-                    //Persediaan Barang Dagang
-                    $account_setting_name = 'purchase_account';
-                    $account_id = $this->getAccountId($account_setting_name);
-                    $account_setting_status = $this->getAccountSettingStatus($account_setting_name);
-                    $account_default_status = $this->getAccountDefaultStatus($account_id);
-                    $journal_voucher_id     = JournalVoucher::orderBy('journal_voucher_id', 'DESC')->where('company_id', $val['company_id'])->first();
-                    if ($account_setting_status == 0) {
-                        $debit_amount = $total_unit_cost['total_unit_cost'];
-                        $credit_amount = 0;
-                    } else {
-                        $debit_amount = 0;
-                        $credit_amount = $total_unit_cost['total_unit_cost'];
-                    }
-                    $journal_debit_bkp = array(
-                        'company_id'                    => $val['company_id'],
-                        'journal_voucher_id'            => $journal_voucher_id['journal_voucher_id'],
-                        'account_id'                    => $account_id,
-                        'journal_voucher_amount'        => $total_unit_cost['total_unit_cost'],
-                        'account_id_default_status'     => $account_default_status,
-                        'account_id_status'             => $account_setting_status,
-                        'journal_voucher_debit_amount'  => $debit_amount,
-                        'journal_voucher_credit_amount' => $credit_amount,
-                        'updated_id'                    => $val['updated_id'],
-                        'created_id'                    => $val['created_id']
-                    );
-                    JournalVoucherItem::create($journal_debit_bkp);
-                } elseif (empty($bkp) && $val['sales_payment_method'] == 2) {
-                    //Piutang Usaha
-                    $account_setting_name = 'sales_receivable_account';
-                    $account_id = $this->getAccountId($account_setting_name);
-                    $account_setting_status = $this->getAccountSettingStatus($account_setting_name);
-                    $account_default_status = $this->getAccountDefaultStatus($account_id);
-                    $journal_voucher_id     = JournalVoucher::orderBy('journal_voucher_id', 'DESC')->where('company_id', $val['company_id'])->first();
-                    if ($account_setting_status == 0) {
-                        $debit_amount = $val['total_amount'];
-                        $credit_amount = 0;
-                    } else {
-                        $debit_amount = 0;
-                        $credit_amount = $val['total_amount'];
-                    }
-                    $journal_debit = array(
-                        'company_id'                    => $val['company_id'],
-                        'journal_voucher_id'            => $journal_voucher_id['journal_voucher_id'],
-                        'account_id'                    => $account_id,
-                        'journal_voucher_amount'        => $val['total_amount'],
-                        'account_id_default_status'     => $account_default_status,
-                        'account_id_status'             => $account_setting_status,
-                        'journal_voucher_debit_amount'  => $debit_amount,
-                        'journal_voucher_credit_amount' => $credit_amount,
-                        'updated_id'                    => $val['updated_id'],
-                        'created_id'                    => $val['created_id']
-                    );
-                    JournalVoucherItem::create($journal_debit);
-
-                    //Penjualan Brg Dagang Non BKP kredit
-                    $account_setting_name = 'sales_cashless_cash_non_bkp_account';
-                    $account_id = $this->getAccountId($account_setting_name);
-                    $account_setting_status = $this->getAccountSettingStatus($account_setting_name);
-                    $account_default_status = $this->getAccountDefaultStatus($account_id);
-                    $journal_voucher_id     = JournalVoucher::orderBy('journal_voucher_id', 'DESC')->where('company_id', $val['company_id'])->first();
-                    if ($account_setting_status == 0) {
-                        $debit_amount =  $val['total_amount'];
-                        $credit_amount = 0;
-                    } else {
-                        $debit_amount = 0;
-                        $credit_amount =  $val['total_amount'];
-                    }
-                    $journal_credit = array(
-                        'company_id'                    => $val['company_id'],
-                        'journal_voucher_id'            => $journal_voucher_id['journal_voucher_id'],
-                        'account_id'                    => $account_id,
-                        'journal_voucher_amount'        =>  $val['total_amount'],
-                        'account_id_default_status'     => $account_default_status,
-                        'account_id_status'             => $account_setting_status,
-                        'journal_voucher_debit_amount'  => $debit_amount,
-                        'journal_voucher_credit_amount' => $credit_amount,
-                        'updated_id'                    => $val['updated_id'],
-                        'created_id'                    => $val['created_id']
-                    );
-                    JournalVoucherItem::create($journal_credit);
-
-
-                    //ppn Non bkp Kredit
-                    // $account_setting_name = 'sales_tax_out_account';
-                    // $account_id = $this->getAccountId($account_setting_name);
-                    // $account_setting_status = $this->getAccountSettingStatus($account_setting_name);
-                    // $account_default_status = $this->getAccountDefaultStatus($account_id);
-                    // $journal_voucher_id     = JournalVoucher::orderBy('journal_voucher_id', 'DESC')->where('company_id', $val['company_id'])->first();
-                    // if ($account_setting_status == 0) {
-                    //     $debit_amount = $ppnAmount['total_tax_amount'];
-                    //     $credit_amount = 0;
-                    // } else {
-                    //     $debit_amount = 0;
-                    //     $credit_amount = $ppnAmount['total_tax_amount'];
-                    // }
-                    // $journal_credit_ppn = array(
-                    //     'company_id'                    => $val['company_id'],
-                    //     'journal_voucher_id'            => $journal_voucher_id['journal_voucher_id'],
-                    //     'account_id'                    => $account_id,
-                    //     'journal_voucher_amount'        => $ppnAmount['total_tax_amount'],
-                    //     'account_id_default_status'     => $account_default_status,
-                    //     'account_id_status'             => $account_setting_status,
-                    //     'journal_voucher_debit_amount'  => $debit_amount,
-                    //     'journal_voucher_credit_amount' => $credit_amount,
-                    //     'updated_id'                    => $val['updated_id'],
-                    //     'created_id'                    => $val['created_id']
-                    // );
-                    // JournalVoucherItem::create($journal_credit_ppn);
-
-                    //beban pokok penjualan Non BKP Kredit
-                    $account_setting_name = 'sales_cash_receivable_non_bkp_account';
-                    $account_id = $this->getAccountId($account_setting_name);
-                    $account_setting_status = $this->getAccountSettingStatus($account_setting_name);
-                    $account_default_status = $this->getAccountDefaultStatus($account_id);
-                    $journal_voucher_id     = JournalVoucher::orderBy('journal_voucher_id', 'DESC')->where('company_id', $val['company_id'])->first();
-                    if ($account_setting_status == 0) {
-                        $debit_amount =   $total_unit_cost['total_unit_cost'];
-                        $credit_amount = 0;
-                    } else {
-                        $debit_amount = 0;
-                        $credit_amount =   $total_unit_cost['total_unit_cost'];
-                    }
-                    $journal_debit_bkp = array(
-                        'company_id'                    => $val['company_id'],
-                        'journal_voucher_id'            => $journal_voucher_id['journal_voucher_id'],
-                        'account_id'                    => $account_id,
-                        'journal_voucher_amount'        =>   $total_unit_cost['total_unit_cost'],
-                        'account_id_default_status'     => $account_default_status,
-                        'account_id_status'             => $account_setting_status,
-                        'journal_voucher_debit_amount'  => $debit_amount,
-                        'journal_voucher_credit_amount' => $credit_amount,
-                        'updated_id'                    => $val['updated_id'],
-                        'created_id'                    => $val['created_id']
-                    );
-                    JournalVoucherItem::create($journal_debit_bkp);
-                    $datacoremember = CoreMember::where('member_id', $val['customer_id'])
+                        $datacoremember = CoreMember::where('member_id', $request->customer_id)
                         ->first();
-                    // CoreMember::where('member_id', $val['customer_id'])
-                    //     ->update(['member_account_receivable_amount_temp' => $datacoremember['member_account_receivable_amount_temp'] + $val['total_amount'],]);
+                        CoreMember::where('member_id', $request->customer_id)
+                            ->update(['member_account_receivable_amount_temp' => $datacoremember['member_account_receivable_amount_temp'] + $val['total_amount'],]);
+                    }
+                    //Jurnal Kerdit Non BKP Pulsa
+                    elseif (isset($items[3])){
+                        //KAS
+                        $account_setting_name = 'consignment_debt_receivables';
+                        $account_id = $this->getAccountId($account_setting_name);
+                        $account_setting_status = $this->getAccountSettingStatus($account_setting_name);
+                        $account_default_status = $this->getAccountDefaultStatus($account_id);
+                        $journal_voucher_id = JournalVoucher::orderBy('created_at', 'DESC')->where('company_id', $val['company_id'])->first();
+                        if($request->qris == true){
+                            if ($account_setting_status == 0) {
+                                $debit_amount = $val['total_amount'] - $val['total_amount'];
+                                $credit_amount = 0;
+                            } else {
+                                $debit_amount = 0;
+                                $credit_amount = $val['total_amount'] - $val['total_amount'];
+                            }
+                            $journal_debit = array(
+                                'company_id'                    => $val['company_id'],
+                                'journal_voucher_id'            => $journal_voucher_id['journal_voucher_id'],
+                                'account_id'                    => $account_id,
+                                'journal_voucher_amount'        => 0,
+                                'account_id_default_status'     => $account_default_status,
+                                'account_id_status'             => $account_setting_status,
+                                'journal_voucher_debit_amount'  => $debit_amount,
+                                'journal_voucher_credit_amount' => $credit_amount,
+                                'updated_id'                    => Auth::id(),
+                                'created_id'                    => Auth::id()
+                            );
+                            JournalVoucherItem::create($journal_debit);
+                        }else{
+                            if ($account_setting_status == 0) {
+                                $debit_amount = $val['total_amount'];
+                                $credit_amount = 0;
+                            } else {
+                                $debit_amount = 0;
+                                $credit_amount = $val['total_amount'];
+                            }
+                            $journal_debit = array(
+                                'company_id'                    => $val['company_id'],
+                                'journal_voucher_id'            => $journal_voucher_id['journal_voucher_id'],
+                                'account_id'                    => $account_id,
+                                'journal_voucher_amount'        => $val['total_amount'],
+                                'account_id_default_status'     => $account_default_status,
+                                'account_id_status'             => $account_setting_status,
+                                'journal_voucher_debit_amount'  => $debit_amount,
+                                'journal_voucher_credit_amount' => $credit_amount,
+                                'updated_id'                    => Auth::id(),
+                                'created_id'                    => Auth::id()
+                            );
+                            JournalVoucherItem::create($journal_debit);
+                        }
 
-                    //Persediaan Barang Dagang
-                    $account_setting_name = 'purchase_account';
-                    $account_id = $this->getAccountId($account_setting_name);
-                    $account_setting_status = $this->getAccountSettingStatus($account_setting_name);
-                    $account_default_status = $this->getAccountDefaultStatus($account_id);
-                    $journal_voucher_id     = JournalVoucher::orderBy('journal_voucher_id', 'DESC')->where('company_id', $val['company_id'])->first();
-                    if ($account_setting_status == 0) {
-                        $debit_amount = $total_unit_cost['total_unit_cost'];
-                        $credit_amount = 0;
-                    } else {
-                        $debit_amount = 0;
-                        $credit_amount = $total_unit_cost['total_unit_cost'];
-                    }
-                    $journal_debit_bkp = array(
-                        'company_id'                    => $val['company_id'],
-                        'journal_voucher_id'            => $journal_voucher_id['journal_voucher_id'],
-                        'account_id'                    => $account_id,
-                        'journal_voucher_amount'        => $total_unit_cost['total_unit_cost'],
-                        'account_id_default_status'     => $account_default_status,
-                        'account_id_status'             => $account_setting_status,
-                        'journal_voucher_debit_amount'  => $debit_amount,
-                        'journal_voucher_credit_amount' => $credit_amount,
-                        'updated_id'                    => $val['updated_id'],
-                        'created_id'                    => $val['created_id']
-                    );
-                    JournalVoucherItem::create($journal_debit_bkp);
-                } elseif ($val['sales_payment_method'] == 6) {
-                    //Piutang Konsinyasi
-                    $account_setting_name = 'consignment_debt_receivables';
-                    $account_id = $this->getAccountId($account_setting_name);
-                    $account_setting_status = $this->getAccountSettingStatus($account_setting_name);
-                    $account_default_status = $this->getAccountDefaultStatus($account_id);
-                    $journal_voucher_id     = JournalVoucher::orderBy('journal_voucher_id', 'DESC')->where('company_id', $val['company_id'])->first();
-                    if ($account_setting_status == 0) {
-                        $debit_amount = $val['total_amount'];
-                        $credit_amount = 0;
-                    } else {
-                        $debit_amount = 0;
-                        $credit_amount = $val['total_amount'];
-                    }
-                    $journal_debit = array(
-                        'company_id'                    => $val['company_id'],
-                        'journal_voucher_id'            => $journal_voucher_id['journal_voucher_id'],
-                        'account_id'                    => $account_id,
-                        'journal_voucher_amount'        => $val['total_amount'],
-                        'account_id_default_status'     => $account_default_status,
-                        'account_id_status'             => $account_setting_status,
-                        'journal_voucher_debit_amount'  => $debit_amount,
-                        'journal_voucher_credit_amount' => $credit_amount,
-                        'updated_id'                    => $val['updated_id'],
-                        'created_id'                    => $val['created_id']
-                    );
-                    JournalVoucherItem::create($journal_debit);
+                        //Piutang Qris
+                        $account_setting_name = 'sales_cash_qris_account';
+                        $account_id = $this->getAccountId($account_setting_name);
+                        $account_setting_status = $this->getAccountSettingStatus($account_setting_name);
+                        $account_default_status = $this->getAccountDefaultStatus($account_id);
+                        $journal_voucher_id = JournalVoucher::orderBy('created_at', 'DESC')->where('company_id', $val['company_id'])->first();
+                        
+                        if($request->qris == true){
+                            if ($account_setting_status == 0) {
+                                $debit_amount = $val['total_amount'];
+                                $credit_amount = 0;
+                            } else {
+                                $debit_amount = 0;
+                                $credit_amount = $val['total_amount'];
+                            }
+                            $journal_debit = array(
+                                'company_id'                    => $val['company_id'],
+                                'journal_voucher_id'            => $journal_voucher_id['journal_voucher_id'],
+                                'account_id'                    => $account_id,
+                                'journal_voucher_amount'        => $val['total_amount'],
+                                'account_id_default_status'     => $account_default_status,
+                                'account_id_status'             => $account_setting_status,
+                                'journal_voucher_debit_amount'  => $debit_amount,
+                                'journal_voucher_credit_amount' => $credit_amount,
+                                'updated_id'                    => Auth::id(),
+                                'created_id'                    => Auth::id()
+                            );
+                            JournalVoucherItem::create($journal_debit);
 
-                    //Hutang konsinyasi 
-                    $account_setting_name = 'consignment_cash';
-                    $account_id = $this->getAccountId($account_setting_name);
-                    $account_setting_status = $this->getAccountSettingStatus($account_setting_name);
-                    $account_default_status = $this->getAccountDefaultStatus($account_id);
-                    $journal_voucher_id     = JournalVoucher::orderBy('journal_voucher_id', 'DESC')->where('company_id', $val['company_id'])->first();
-                    if ($account_setting_status == 0) {
-                        $debit_amount = $val['total_amount'];
-                        $credit_amount = 0;
-                    } else {
-                        $debit_amount = 0;
-                        $credit_amount = $val['total_amount'];
-                    }
-                    $journal_credit = array(
-                        'company_id'                    => $val['company_id'],
-                        'journal_voucher_id'            => $journal_voucher_id['journal_voucher_id'],
-                        'account_id'                    => $account_id,
-                        'journal_voucher_amount'        => $val['total_amount'],
-                        'account_id_default_status'     => $account_default_status,
-                        'account_id_status'             => $account_setting_status,
-                        'journal_voucher_debit_amount'  => $debit_amount,
-                        'journal_voucher_credit_amount' => $credit_amount,
-                        'updated_id'                    => $val['updated_id'],
-                        'created_id'                    => $val['created_id']
-                    );
-                    JournalVoucherItem::create($journal_credit);
+                        }else{
+                            if ($account_setting_status == 0) {
+                                $debit_amount = $val['total_amount'] - $val['total_amount'];
+                                $credit_amount = 0;
+                            } else {
+                                $debit_amount = 0;
+                                $credit_amount = $val['total_amount'] - $val['total_amount'];
+                            }
+                            $journal_debit = array(
+                                'company_id'                    => $val['company_id'],
+                                'journal_voucher_id'            => $journal_voucher_id['journal_voucher_id'],
+                                'account_id'                    => $account_id,
+                                'journal_voucher_amount'        => 0,
+                                'account_id_default_status'     => $account_default_status,
+                                'account_id_status'             => $account_setting_status,
+                                'journal_voucher_debit_amount'  => $debit_amount,
+                                'journal_voucher_credit_amount' => $credit_amount,
+                                'updated_id'                    => Auth::id(),
+                                'created_id'                    => Auth::id()
+                            );
+                            JournalVoucherItem::create($journal_debit);
+                        }
 
+                        //Penjualan Brg Dagang BKP Tunai
+                        $account_setting_name = 'sales_receivable_bkp_account';
+                        $account_id = $this->getAccountId($account_setting_name);
+                        $account_setting_status = $this->getAccountSettingStatus($account_setting_name);
+                        $account_default_status = $this->getAccountDefaultStatus($account_id);
+                        $journal_voucher_id = JournalVoucher::orderBy('created_at', 'DESC')->where('company_id', $val['company_id'])->first();
+                        if ($account_setting_status == 0) {
+                            $debit_amount = $priceAmount['total_price_amount'] - $ppnAmount['sales_tax_amount'];
+                            $credit_amount = 0;
+                        } else {
+                            $debit_amount = 0;
+                            $credit_amount = $priceAmount['total_price_amount'] - $ppnAmount['sales_tax_amount'];
+                        }
+                        $journal_credit = array(
+                            'company_id'                    => $val['company_id'],
+                            'journal_voucher_id'            => $journal_voucher_id['journal_voucher_id'],
+                            'account_id'                    => $account_id,
+                            'journal_voucher_amount'        => $priceAmount['total_price_amount'] - $ppnAmount['sales_tax_amount'],
+                            'account_id_default_status'     => $account_default_status,
+                            'account_id_status'             => $account_setting_status,
+                            'journal_voucher_debit_amount'  => $debit_amount,
+                            'journal_voucher_credit_amount' => $credit_amount,
+                            'updated_id'                    => Auth::id(),
+                            'created_id'                    => Auth::id()
+                        );
+                        JournalVoucherItem::create($journal_credit);
 
-                    //Pendapatan
-                    $account_setting_name = 'sales_profit_account';
-                    $account_id = $this->getAccountId($account_setting_name);
-                    $account_setting_status = $this->getAccountSettingStatus($account_setting_name);
-                    $account_default_status = $this->getAccountDefaultStatus($account_id);
-                    $journal_voucher_id     = JournalVoucher::orderBy('journal_voucher_id', 'DESC')->where('company_id', $val['company_id'])->first();
-                    if ($account_setting_status == 0) {
-                        $debit_amount = $val['total_amount'];
-                        $credit_amount = 0;
-                    } else {
-                        $debit_amount = 0;
-                        $credit_amount = $val['total_amount'];
+                        //PPN KELUARAN
+                        $account_setting_name = 'sales_tax_out_account';
+                        $account_id = $this->getAccountId($account_setting_name);
+                        $account_setting_status = $this->getAccountSettingStatus($account_setting_name);
+                        $account_default_status = $this->getAccountDefaultStatus($account_id);
+                        $journal_voucher_id = JournalVoucher::orderBy('created_at', 'DESC')->where('company_id', $val['company_id'])->first();
+                        if ($account_setting_status == 0) {
+                            $debit_amount = $ppnAmount['total_tax_amount'];
+                            $credit_amount = 0;
+                        } else {
+                            $debit_amount = 0;
+                            $credit_amount = $ppnAmount['total_tax_amount'];
+                        }
+                        $journal_credit_ppn = array(
+                            'company_id'                    => $val['company_id'],
+                            'journal_voucher_id'            => $journal_voucher_id['journal_voucher_id'],
+                            'account_id'                    => $account_id,
+                            'journal_voucher_amount'        => $ppnAmount['total_tax_amount'],
+                            'account_id_default_status'     => $account_default_status,
+                            'account_id_status'             => $account_setting_status,
+                            'journal_voucher_debit_amount'  => $debit_amount,
+                            'journal_voucher_credit_amount' => $credit_amount,
+                            'updated_id'                    => Auth::id(),
+                            'created_id'                    => Auth::id()
+                        );
+                        JournalVoucherItem::create($journal_credit_ppn);
+
+                        //Beban Pokok Penjualan - BKP Tunai
+                        $account_setting_name = 'sales_cash_receivable_bkp_account';
+                        $account_id = $this->getAccountId($account_setting_name);
+                        $account_setting_status = $this->getAccountSettingStatus($account_setting_name);
+                        $account_default_status = $this->getAccountDefaultStatus($account_id);
+                        $journal_voucher_id = JournalVoucher::orderBy('created_at', 'DESC')->where('company_id', $val['company_id'])->first();
+                        if ($account_setting_status == 0) {
+                            $debit_amount = $hppAmount['total_hpp_amount'];
+                            $credit_amount = 0;
+                        } else {
+                            $debit_amount = 0;
+                            $credit_amount = $hppAmount['total_hpp_amount'];
+                        }
+                        $journal_debit_bkp = array(
+                            'company_id'                    => $val['company_id'],
+                            'journal_voucher_id'            => $journal_voucher_id['journal_voucher_id'],
+                            'account_id'                    => $account_id,
+                            'journal_voucher_amount'        => $hppAmount['total_hpp_amount'],
+                            'account_id_default_status'     => $account_default_status,
+                            'account_id_status'             => $account_setting_status,
+                            'journal_voucher_debit_amount'  => $debit_amount,
+                            'journal_voucher_credit_amount' => $credit_amount,
+                            'updated_id'                    => Auth::id(),
+                            'created_id'                    => Auth::id()
+                        );
+                        JournalVoucherItem::create($journal_debit_bkp);
+
+                        //Persediaan Barang Dagang Tunai
+                        $account_setting_name = 'inventory_cash_account';
+                        $account_id = $this->getAccountId($account_setting_name);
+                        $account_setting_status = $this->getAccountSettingStatus($account_setting_name);
+                        $account_default_status = $this->getAccountDefaultStatus($account_id);
+                        $journal_voucher_id = JournalVoucher::orderBy('created_at', 'DESC')->where('company_id', $val['company_id'])->first();
+                        if ($account_setting_status == 0) {
+                            $debit_amount = $hppAmount['total_hpp_amount'];
+                            $credit_amount = 0;
+                        } else {
+                            $debit_amount = 0;
+                            $credit_amount = $hppAmount['total_hpp_amount'];
+                        }
+                        $journal_credit = array(
+                            'company_id'                    => $val['company_id'],
+                            'journal_voucher_id'            => $journal_voucher_id['journal_voucher_id'],
+                            'account_id'                    => $account_id,
+                            'journal_voucher_amount'        => $hppAmount['total_hpp_amount'],
+                            'account_id_default_status'     => $account_default_status,
+                            'account_id_status'             => $account_setting_status,
+                            'journal_voucher_debit_amount'  => $debit_amount,
+                            'journal_voucher_credit_amount' => $credit_amount,
+                            'updated_id'                    => Auth::id(),
+                            'created_id'                    => Auth::id()
+                        );
+                        JournalVoucherItem::create($journal_credit);
                     }
-                    $journal_debit_profit = array(
-                        'company_id'                    => $val['company_id'],
-                        'journal_voucher_id'            => $journal_voucher_id['journal_voucher_id'],
-                        'account_id'                    => $account_id,
-                        'journal_voucher_amount'        => $val['total_amount'],
-                        'account_id_default_status'     => $account_default_status,
-                        'account_id_status'             => $account_setting_status,
-                        'journal_voucher_debit_amount'  => $debit_amount,
-                        'journal_voucher_credit_amount' => $credit_amount,
-                        'updated_id'                    => $val['updated_id'],
-                        'created_id'                    => $val['created_id']
-                    );
-                    JournalVoucherItem::create($journal_debit_profit);
-                }else{
-                    //Piutang Usaha
-                    $account_setting_name = 'sales_receivable_account';
-                    $account_id = $this->getAccountId($account_setting_name);
-                    $account_setting_status = $this->getAccountSettingStatus($account_setting_name);
-                    $account_default_status = $this->getAccountDefaultStatus($account_id);
-                    $journal_voucher_id     = JournalVoucher::orderBy('journal_voucher_id', 'DESC')->where('company_id', $val['company_id'])->first();
-                    if ($account_setting_status == 0) {
-                        $debit_amount =  $val['total_amount'];
-                        $credit_amount = 0;
-                    } else {
-                        $debit_amount = 0;
-                        $credit_amount =  $val['total_amount'];
+                        break;
+                    case 3: 
+                    case 4:
+                    //Jurnal Piutang Beras
+                    if ($val['sales_payment_method'] == 3) {
+                        //Piutang Usaha
+                        $account_setting_name = 'sales_receivable_account';
+                        $account_id = $this->getAccountId($account_setting_name);
+                        $account_setting_status = $this->getAccountSettingStatus($account_setting_name);
+                        $account_default_status = $this->getAccountDefaultStatus($account_id);
+                        $journal_voucher_id = JournalVoucher::orderBy('created_at', 'DESC')->where('company_id', $val['company_id'])->first();
+                        if ($account_setting_status == 0) {
+                            $debit_amount = $val['total_amount'];
+                            $credit_amount = 0;
+                        } else {
+                            $debit_amount = 0;
+                            $credit_amount = $val['total_amount'];
+                        }
+                        $journal_debit = array(
+                            'company_id'                    => $val['company_id'],
+                            'journal_voucher_id'            => $journal_voucher_id['journal_voucher_id'],
+                            'account_id'                    => $account_id,
+                            'journal_voucher_amount'        => $val['total_amount'],
+                            'account_id_default_status'     => $account_default_status,
+                            'account_id_status'             => $account_setting_status,
+                            'journal_voucher_debit_amount'  => $debit_amount,
+                            'journal_voucher_credit_amount' => $credit_amount,
+                            'updated_id'                    => Auth::id(),
+                            'created_id'                    => Auth::id()
+                        );
+                        JournalVoucherItem::create($journal_debit);
+
+                        //Penjualan Brg Dagang Non BKP kredit
+                        $account_setting_name = 'sales_cashless_cash_non_bkp_account';
+                        $account_id = $this->getAccountId($account_setting_name);
+                        $account_setting_status = $this->getAccountSettingStatus($account_setting_name);
+                        $account_default_status = $this->getAccountDefaultStatus($account_id);
+                        $journal_voucher_id = JournalVoucher::orderBy('created_at', 'DESC')->where('company_id', $val['company_id'])->first();
+                        if ($account_setting_status == 0) {
+                            $debit_amount =  $val['total_amount'];
+                            $credit_amount = 0;
+                        } else {
+                            $debit_amount = 0;
+                            $credit_amount =  $val['total_amount'];
+                        }
+                        $journal_credit = array(
+                            'company_id'                    => $val['company_id'],
+                            'journal_voucher_id'            => $journal_voucher_id['journal_voucher_id'],
+                            'account_id'                    => $account_id,
+                            'journal_voucher_amount'        =>  $val['total_amount'],
+                            'account_id_default_status'     => $account_default_status,
+                            'account_id_status'             => $account_setting_status,
+                            'journal_voucher_debit_amount'  => $debit_amount,
+                            'journal_voucher_credit_amount' => $credit_amount,
+                            'updated_id'                    => Auth::id(),
+                            'created_id'                    => Auth::id()
+                        );
+                        JournalVoucherItem::create($journal_credit);
+
+                        //Beban Pokok Penjualan Non BKP Kredit
+                        $account_setting_name = 'sales_cash_receivable_non_bkp_account';
+                        $account_id = $this->getAccountId($account_setting_name);
+                        $account_setting_status = $this->getAccountSettingStatus($account_setting_name);
+                        $account_default_status = $this->getAccountDefaultStatus($account_id);
+                        $journal_voucher_id = JournalVoucher::orderBy('created_at', 'DESC')->where('company_id', $val['company_id'])->first();
+                        if ($account_setting_status == 0) {
+                            $debit_amount =  $hppAmount['total_hpp_amount'];
+                            $credit_amount = 0;
+                        } else {
+                            $debit_amount = 0;
+                            $credit_amount =  $hppAmount['total_hpp_amount'];
+                        }
+                        $journal_debit_bkp = array(
+                            'company_id'                    => $val['company_id'],
+                            'journal_voucher_id'            => $journal_voucher_id['journal_voucher_id'],
+                            'account_id'                    => $account_id,
+                            'journal_voucher_amount'        =>  $hppAmount['total_hpp_amount'],
+                            'account_id_default_status'     => $account_default_status,
+                            'account_id_status'             => $account_setting_status,
+                            'journal_voucher_debit_amount'  => $debit_amount,
+                            'journal_voucher_credit_amount' => $credit_amount,
+                            'updated_id'                    => Auth::id(),
+                            'created_id'                    => Auth::id()
+                        );
+                        JournalVoucherItem::create($journal_debit_bkp);
+
+                        //Persediaan Barang Dagang Tunai
+                        $account_setting_name = 'inventory_cash_account';
+                        $account_id = $this->getAccountId($account_setting_name);
+                        $account_setting_status = $this->getAccountSettingStatus($account_setting_name);
+                        $account_default_status = $this->getAccountDefaultStatus($account_id);
+                        $journal_voucher_id = JournalVoucher::orderBy('created_at', 'DESC')->where('company_id', $val['company_id'])->first();
+                        if ($account_setting_status == 0) {
+                            $debit_amount = $hppAmount['total_hpp_amount'];
+                            $credit_amount = 0;
+                        } else {
+                            $debit_amount = 0;
+                            $credit_amount = $hppAmount['total_hpp_amount'];
+                        }
+                        $journal_credit = array(
+                            'company_id'                    => $val['company_id'],
+                            'journal_voucher_id'            => $journal_voucher_id['journal_voucher_id'],
+                            'account_id'                    => $account_id,
+                            'journal_voucher_amount'        => $hppAmount['total_hpp_amount'],
+                            'account_id_default_status'     => $account_default_status,
+                            'account_id_status'             => $account_setting_status,
+                            'journal_voucher_debit_amount'  => $debit_amount,
+                            'journal_voucher_credit_amount' => $credit_amount,
+                            'updated_id'                    => Auth::id(),
+                            'created_id'                    => Auth::id()
+                        );
+                        JournalVoucherItem::create($journal_credit);
+
+                        $datacoremember = CoreMember::where('member_id', $request->customer_id)
+                        ->first();
+                        CoreMember::where('member_id', $request->customer_id)
+                            ->update(['member_account_receivable_amount_temp' => $datacoremember['member_account_receivable_amount_temp'] + $val['total_amount'],]);
+                    
                     }
-                    $journal_debit = array(
-                        'company_id'                    => $val['company_id'],
-                        'journal_voucher_id'            => $journal_voucher_id['journal_voucher_id'],
-                        'account_id'                    => $account_id,
-                        'journal_voucher_amount'        =>  $val['total_amount'],
-                        'account_id_default_status'     => $account_default_status,
-                        'account_id_status'             => $account_setting_status,
-                        'journal_voucher_debit_amount'  => $debit_amount,
-                        'journal_voucher_credit_amount' => $credit_amount,
-                        'updated_id'                    => $val['updated_id'],
-                        'created_id'                    => $val['created_id']
-                    );
-                    JournalVoucherItem::create($journal_debit);
-    
-                    //Penjualan Brg Dagang Non BKP kredit
-                    $account_setting_name = 'sales_receivable_bkp_account';
-                    $account_id = $this->getAccountId($account_setting_name);
-                    $account_setting_status = $this->getAccountSettingStatus($account_setting_name);
-                    $account_default_status = $this->getAccountDefaultStatus($account_id);
-                    $journal_voucher_id     = JournalVoucher::orderBy('journal_voucher_id', 'DESC')->where('company_id', $val['company_id'])->first();
-                    if ($account_setting_status == 0) {
-                        $debit_amount =  $val['total_amount'];
-                        $credit_amount = 0;
-                    } else {
-                        $debit_amount = 0;
-                        $credit_amount =  $val['total_amount'];
+                    //Jurnal Piutang Barang
+                    elseif ($val['sales_payment_method'] == 4) {
+                        //Piutang Usaha
+                        $account_setting_name = 'sales_receivable_account';
+                        $account_id = $this->getAccountId($account_setting_name);
+                        $account_setting_status = $this->getAccountSettingStatus($account_setting_name);
+                        $account_default_status = $this->getAccountDefaultStatus($account_id);
+                        $journal_voucher_id = JournalVoucher::orderBy('created_at', 'DESC')->where('company_id', $val['company_id'])->first();
+                        if ($account_setting_status == 0) {
+                            $debit_amount = $val['total_amount'];
+                            $credit_amount = 0;
+                        } else {
+                            $debit_amount = 0;
+                            $credit_amount = $val['total_amount'];
+                        }
+                        $journal_debit = array(
+                            'company_id'                    => $val['company_id'],
+                            'journal_voucher_id'            => $journal_voucher_id['journal_voucher_id'],
+                            'account_id'                    => $account_id,
+                            'journal_voucher_amount'        => $val['total_amount'],
+                            'account_id_default_status'     => $account_default_status,
+                            'account_id_status'             => $account_setting_status,
+                            'journal_voucher_debit_amount'  => $debit_amount,
+                            'journal_voucher_credit_amount' => $credit_amount,
+                            'updated_id'                    => Auth::id(),
+                            'created_id'                    => Auth::id()
+                        );
+                        JournalVoucherItem::create($journal_debit);
+        
+                        //Penjualan Brg Dagang Non BKP kredit
+                        $account_setting_name = 'sales_cashless_cash_non_bkp_account';
+                        $account_id = $this->getAccountId($account_setting_name);
+                        $account_setting_status = $this->getAccountSettingStatus($account_setting_name);
+                        $account_default_status = $this->getAccountDefaultStatus($account_id);
+                        $journal_voucher_id = JournalVoucher::orderBy('created_at', 'DESC')->where('company_id', $val['company_id'])->first();
+                        if ($account_setting_status == 0) {
+                            $debit_amount =  $val['total_amount'];
+                            $credit_amount = 0;
+                        } else {
+                            $debit_amount = 0;
+                            $credit_amount =  $val['total_amount'];
+                        }
+                        $journal_credit = array(
+                            'company_id'                    => $val['company_id'],
+                            'journal_voucher_id'            => $journal_voucher_id['journal_voucher_id'],
+                            'account_id'                    => $account_id,
+                            'journal_voucher_amount'        =>  $val['total_amount'],
+                            'account_id_default_status'     => $account_default_status,
+                            'account_id_status'             => $account_setting_status,
+                            'journal_voucher_debit_amount'  => $debit_amount,
+                            'journal_voucher_credit_amount' => $credit_amount,
+                            'updated_id'                    => Auth::id(),
+                            'created_id'                    => Auth::id()
+                        );
+                        JournalVoucherItem::create($journal_credit);
+        
+                        //Beban Pokok Penjualan Non BKP Kredit
+                        $account_setting_name = 'sales_cash_receivable_non_bkp_account';
+                        $account_id = $this->getAccountId($account_setting_name);
+                        $account_setting_status = $this->getAccountSettingStatus($account_setting_name);
+                        $account_default_status = $this->getAccountDefaultStatus($account_id);
+                        $journal_voucher_id = JournalVoucher::orderBy('created_at', 'DESC')->where('company_id', $val['company_id'])->first();
+                        if ($account_setting_status == 0) {
+                            $debit_amount =  $hppAmount['total_hpp_amount'];
+                            $credit_amount = 0;
+                        } else {
+                            $debit_amount = 0;
+                            $credit_amount =  $hppAmount['total_hpp_amount'];
+                        }
+                        $journal_debit_bkp = array(
+                            'company_id'                    => $val['company_id'],
+                            'journal_voucher_id'            => $journal_voucher_id['journal_voucher_id'],
+                            'account_id'                    => $account_id,
+                            'journal_voucher_amount'        =>  $hppAmount['total_hpp_amount'],
+                            'account_id_default_status'     => $account_default_status,
+                            'account_id_status'             => $account_setting_status,
+                            'journal_voucher_debit_amount'  => $debit_amount,
+                            'journal_voucher_credit_amount' => $credit_amount,
+                            'updated_id'                    => Auth::id(),
+                            'created_id'                    => Auth::id()
+                        );
+                        JournalVoucherItem::create($journal_debit_bkp);
+        
+                        //Persediaan Barang Dagang Tunai
+                        $account_setting_name = 'inventory_cash_account';
+                        $account_id = $this->getAccountId($account_setting_name);
+                        $account_setting_status = $this->getAccountSettingStatus($account_setting_name);
+                        $account_default_status = $this->getAccountDefaultStatus($account_id);
+                        $journal_voucher_id = JournalVoucher::orderBy('created_at', 'DESC')->where('company_id', $val['company_id'])->first();
+                        if ($account_setting_status == 0) {
+                            $debit_amount = $hppAmount['total_hpp_amount'];
+                            $credit_amount = 0;
+                        } else {
+                            $debit_amount = 0;
+                            $credit_amount = $hppAmount['total_hpp_amount'];
+                        }
+                        $journal_credit = array(
+                            'company_id'                    => $val['company_id'],
+                            'journal_voucher_id'            => $journal_voucher_id['journal_voucher_id'],
+                            'account_id'                    => $account_id,
+                            'journal_voucher_amount'        => $hppAmount['total_hpp_amount'],
+                            'account_id_default_status'     => $account_default_status,
+                            'account_id_status'             => $account_setting_status,
+                            'journal_voucher_debit_amount'  => $debit_amount,
+                            'journal_voucher_credit_amount' => $credit_amount,
+                            'updated_id'                    => Auth::id(),
+                            'created_id'                    => Auth::id()
+                        );
+                        JournalVoucherItem::create($journal_credit);
+        
+                        $datacoremember = CoreMember::where('member_id', $request->customer_id)
+                        ->first();
+                        CoreMember::where('member_id', $request->customer_id)
+                            ->update(['member_account_receivable_amount_temp' => $datacoremember['member_account_receivable_amount_temp'] + $val['total_amount'],]);
+                    
                     }
-                    $journal_credit = array(
-                        'company_id'                    => $val['company_id'],
-                        'journal_voucher_id'            => $journal_voucher_id['journal_voucher_id'],
-                        'account_id'                    => $account_id,
-                        'journal_voucher_amount'        =>  $val['total_amount'],
-                        'account_id_default_status'     => $account_default_status,
-                        'account_id_status'             => $account_setting_status,
-                        'journal_voucher_debit_amount'  => $debit_amount,
-                        'journal_voucher_credit_amount' => $credit_amount,
-                        'updated_id'                    => $val['updated_id'],
-                        'created_id'                    => $val['created_id']
-                    );
-                    JournalVoucherItem::create($journal_credit);
-    
-    
-                    //ppn Non bkp Kredit
-                    $account_setting_name = 'sales_tax_out_account';
-                    $account_id = $this->getAccountId($account_setting_name);
-                    $account_setting_status = $this->getAccountSettingStatus($account_setting_name);
-                    $account_default_status = $this->getAccountDefaultStatus($account_id);
-                    $journal_voucher_id     = JournalVoucher::orderBy('journal_voucher_id', 'DESC')->where('company_id', $val['company_id'])->first();
-                    if ($account_setting_status == 0) {
-                        $debit_amount = $ppnAmount['total_tax_amount'];
-                        $credit_amount = 0;
-                    } else {
-                        $debit_amount = 0;
-                        $credit_amount = $ppnAmount['total_tax_amount'];
+                        break;
+                    case 6:
+                    //Jurnal Konsinyasi 
+                    if($val['sales_payment_method'] == 6){
+                        // piutang konsinyasi // KAS
+                        $account_setting_name = 'consignment_cash';
+                        $account_id = $this->getAccountId($account_setting_name);
+                        $account_setting_status = $this->getAccountSettingStatus($account_setting_name);
+                        $account_default_status = $this->getAccountDefaultStatus($account_id);
+                        $journal_voucher_id = JournalVoucher::orderBy('created_at', 'DESC')->where('company_id', $val['company_id'])->first();
+                        if ($account_setting_status == 0) {
+                            $debit_amount = $val['total_amount'];
+                            $credit_amount = 0;
+                        } else {
+                            $debit_amount = 0;
+                            $credit_amount = $val['total_amount'];
+                        }
+                        $journal_debit = array(
+                            'company_id'                    => $val['company_id'],
+                            'journal_voucher_id'            => $journal_voucher_id['journal_voucher_id'],
+                            'account_id'                    => $account_id,
+                            'journal_voucher_amount'        => $val['total_amount'],
+                            'account_id_default_status'     => $account_default_status,
+                            'account_id_status'             => $account_setting_status,
+                            'journal_voucher_debit_amount'  => $debit_amount,
+                            'journal_voucher_credit_amount' => $credit_amount,
+                            'updated_id'                    => Auth::id(),
+                            'created_id'                    => Auth::id()
+                        );
+                        JournalVoucherItem::create($journal_debit);
+
+                        //Penjualan TOKO - BKP
+                        $account_setting_name = 'sales_profit_account';
+                        $account_id = $this->getAccountId($account_setting_name);
+                        $account_setting_status = $this->getAccountSettingStatus($account_setting_name);
+                        $account_default_status = $this->getAccountDefaultStatus($account_id);
+                        $journal_voucher_id = JournalVoucher::orderBy('created_at', 'DESC')->where('company_id', $val['company_id'])->first();
+                        if ($account_setting_status == 0) {
+                            $debit_amount = $priceAmount['total_price_amount'] - $ppnAmount['total_tax_amount'];
+                            $credit_amount = 0;
+                        } else {
+                            $debit_amount = 0;
+                            $credit_amount = $priceAmount['total_price_amount'] - $ppnAmount['total_tax_amount'];
+                        }
+                        $journal_credit = array(
+                            'company_id'                    => $val['company_id'],
+                            'journal_voucher_id'            => $journal_voucher_id['journal_voucher_id'],
+                            'account_id'                    => $account_id,
+                            'journal_voucher_amount'        => $priceAmount['total_price_amount'] - $ppnAmount['total_tax_amount'],
+                            'account_id_default_status'     => $account_default_status,
+                            'account_id_status'             => $account_setting_status,
+                            'journal_voucher_debit_amount'  => $debit_amount,
+                            'journal_voucher_credit_amount' => $credit_amount,
+                            'updated_id'                    => Auth::id(),
+                            'created_id'                    => Auth::id()
+                        );
+                        JournalVoucherItem::create($journal_credit);
+
+                        //PPN KELUARAN
+                        $account_setting_name = 'sales_tax_out_account';
+                        $account_id = $this->getAccountId($account_setting_name);
+                        $account_setting_status = $this->getAccountSettingStatus($account_setting_name);
+                        $account_default_status = $this->getAccountDefaultStatus($account_id);
+                        $journal_voucher_id = JournalVoucher::orderBy('created_at', 'DESC')->where('company_id', $val['company_id'])->first();
+                        if ($account_setting_status == 0) {
+                            $debit_amount = $ppnAmount['total_tax_amount'];
+                            $credit_amount = 0;
+                        } else {
+                            $debit_amount = 0;
+                            $credit_amount = $ppnAmount['total_tax_amount'];
+                        }
+                        $journal_credit_tax = array(
+                            'company_id'                    => $val['company_id'],
+                            'journal_voucher_id'            => $journal_voucher_id['journal_voucher_id'],
+                            'account_id'                    => $account_id,
+                            'journal_voucher_amount'        => $ppnAmount['total_tax_amount'],
+                            'account_id_default_status'     => $account_default_status,
+                            'account_id_status'             => $account_setting_status,
+                            'journal_voucher_debit_amount'  => $debit_amount,
+                            'journal_voucher_credit_amount' => $credit_amount,
+                            'updated_id'                    => Auth::id(),
+                            'created_id'                    => Auth::id()
+                        );
+                        JournalVoucherItem::create($journal_credit_tax);
+
+                        // HPP - BKP
+                        $account_setting_name = 'sales_cash_receivable_bkp_account';
+                        $account_id = $this->getAccountId($account_setting_name);
+                        $account_setting_status = $this->getAccountSettingStatus($account_setting_name);
+                        $account_default_status = $this->getAccountDefaultStatus($account_id);
+                        $journal_voucher_id = JournalVoucher::orderBy('created_at', 'DESC')->where('company_id', $val['company_id'])->first();
+                        if ($account_setting_status == 0) {
+                            $debit_amount =  $hppAmount['total_hpp_amount'];
+                            $credit_amount = 0;
+                        } else {
+                            $debit_amount = 0;
+                            $credit_amount =  $hppAmount['total_hpp_amount'];
+                        }
+                        $journal_debit = array(
+                            'company_id'                    => $val['company_id'],
+                            'journal_voucher_id'            => $journal_voucher_id['journal_voucher_id'],
+                            'account_id'                    => $account_id,
+                            'journal_voucher_amount'        =>  $hppAmount['total_hpp_amount'],
+                            'account_id_default_status'     => $account_default_status,
+                            'account_id_status'             => $account_setting_status,
+                            'journal_voucher_debit_amount'  => $debit_amount,
+                            'journal_voucher_credit_amount' => $credit_amount,
+                            'updated_id'                    => Auth::id(),
+                            'created_id'                    => Auth::id()
+                        );
+                        JournalVoucherItem::create($journal_debit);
+
+                        //Persediaan Barang Dagang Tunai
+                        $account_setting_name = 'inventory_cash_account';
+                        $account_id = $this->getAccountId($account_setting_name);
+                        $account_setting_status = $this->getAccountSettingStatus($account_setting_name);
+                        $account_default_status = $this->getAccountDefaultStatus($account_id);
+                        $journal_voucher_id = JournalVoucher::orderBy('created_at', 'DESC')->where('company_id', $val['company_id'])->first();
+                        if ($account_setting_status == 0) {
+                            $debit_amount = $hppAmount['total_hpp_amount'];
+                            $credit_amount = 0;
+                        } else {
+                            $debit_amount = 0;
+                            $credit_amount = $hppAmount['total_hpp_amount'];
+                        }
+                        $journal_credit = array(
+                            'company_id'                    => $val['company_id'],
+                            'journal_voucher_id'            => $journal_voucher_id['journal_voucher_id'],
+                            'account_id'                    => $account_id,
+                            'journal_voucher_amount'        => $hppAmount['total_hpp_amount'],
+                            'account_id_default_status'     => $account_default_status,
+                            'account_id_status'             => $account_setting_status,
+                            'journal_voucher_debit_amount'  => $debit_amount,
+                            'journal_voucher_credit_amount' => $credit_amount,
+                            'updated_id'                    => Auth::id(),
+                            'created_id'                    => Auth::id()
+                        );
+                        JournalVoucherItem::create($journal_credit);
+
                     }
-                    $journal_credit_ppn = array(
-                        'company_id'                    => $val['company_id'],
-                        'journal_voucher_id'            => $journal_voucher_id['journal_voucher_id'],
-                        'account_id'                    => $account_id,
-                        'journal_voucher_amount'        => $ppnAmount['total_tax_amount'],
-                        'account_id_default_status'     => $account_default_status,
-                        'account_id_status'             => $account_setting_status,
-                        'journal_voucher_debit_amount'  => $debit_amount,
-                        'journal_voucher_credit_amount' => $credit_amount,
-                        'updated_id'                    => $val['updated_id'],
-                        'created_id'                    => $val['created_id']
-                    );
-                    JournalVoucherItem::create($journal_credit_ppn);
-    
-                    //beban pokok penjualan Non BKP Kredit
-                    $account_setting_name = 'sales_cash_receivable_bkp_account';
-                    $account_id = $this->getAccountId($account_setting_name);
-                    $account_setting_status = $this->getAccountSettingStatus($account_setting_name);
-                    $account_default_status = $this->getAccountDefaultStatus($account_id);
-                    $journal_voucher_id     = JournalVoucher::orderBy('journal_voucher_id', 'DESC')->where('company_id', $val['company_id'])->first();
-                    if ($account_setting_status == 0) {
-                        $debit_amount =  $total_unit_cost['total_unit_cost'];
-                        $credit_amount = 0;
-                    } else {
-                        $debit_amount = 0;
-                        $credit_amount =  $total_unit_cost['total_unit_cost'];
-                    }
-                    $journal_debit_bkp = array(
-                        'company_id'                    => $val['company_id'],
-                        'journal_voucher_id'            => $journal_voucher_id['journal_voucher_id'],
-                        'account_id'                    => $account_id,
-                        'journal_voucher_amount'        =>  $total_unit_cost['total_unit_cost'],
-                        'account_id_default_status'     => $account_default_status,
-                        'account_id_status'             => $account_setting_status,
-                        'journal_voucher_debit_amount'  => $debit_amount,
-                        'journal_voucher_credit_amount' => $credit_amount,
-                        'updated_id'                    => $val['updated_id'],
-                        'created_id'                    => $val['created_id']
-                    );
-                    JournalVoucherItem::create($journal_debit_bkp);
-                    $datacoremember = CoreMember::where('member_id', $val['customer_id'])
-                    ->first();
-                CoreMember::where('member_id', $val['customer_id']);
-                    // ->update(['member_account_receivable_amount_temp' => $datacoremember['member_account_receivable_amount_temp'] +  $val['total_amount'],]);
+                        break;
                 }
 
 
@@ -2087,6 +2786,8 @@ class ApiController extends Controller
                     }
                 }
             }
+
+
             //inventory
             foreach ($request->salesItem as $key => $val) {
                 $data_packge = InvtItemPackge::where('company_id', $val['company_id'])
